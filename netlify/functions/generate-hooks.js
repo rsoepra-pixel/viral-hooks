@@ -7,20 +7,20 @@ exports.handler = async (event) => {
     const { topic, audience, categories } = body;
     if (!topic || !categories) return { statusCode: 400, body: JSON.stringify({error: "Missing"}) };
 
-    // 15 hooks per batch × 2 batches = 30 hooks total
-    const hooksPerBatch = 15;
+    // Test concurrent: 10 hooks per batch
+    const hooksPerBatch = 10;
     const prompt = `Generate ${hooksPerBatch} viral social media hooks about: ${topic}
 Target audience: ${audience || "general"}
 Categories: ${categories.join(", ")}
 
 Instructions:
 - Generate exactly ${hooksPerBatch} hooks
-- Mix of Indonesian (lang: "id") and English (lang: "en") - roughly equal split
-- Distribute across the ${categories.length} provided categories
-- Each hook must be unique, engaging, and compelling for creators
-- Return ONLY a JSON array - no other text
+- Mix Indonesian (lang: "id") and English (lang: "en")
+- Distribute across the ${categories.length} categories
+- Each hook unique, engaging, compelling
+- Return ONLY JSON array - no other text
 
-Format: [{"cat":"Category","text":"hook text here","lang":"id" or "en","platform":"TikTok|Instagram|LinkedIn|YouTube","emotion":"emotion word","why":"brief reason why"},...]`;
+Format: [{"cat":"Category","text":"hook text","lang":"id"|"en","platform":"TikTok|Instagram|LinkedIn|YouTube","emotion":"word","why":"reason"},...]`;
 
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 60000);
@@ -34,7 +34,7 @@ Format: [{"cat":"Category","text":"hook text here","lang":"id" or "en","platform
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 2500,
+        max_tokens: 2000,
         messages: [{role: "user", content: prompt}]
       }),
       signal: controller.signal
