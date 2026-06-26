@@ -98,7 +98,7 @@ button:hover:not(:disabled) { background: #9fff33; }
 
   <div class="section">
     <h3>⚡ Powered by Claude AI</h3>
-    <p style="font-size: 12px; color: #999;">Bilingual hooks (Indonesia 🇮🇩 + English 🇬🇧). API key securely stored on server.</p>
+    <p style="font-size: 12px; color: #999;">Bilingual hooks (Indonesia 🇮🇩 + English 🇬🇧). API key securely stored on server. Concurrent processing for speed.</p>
   </div>
 
   <div class="section">
@@ -110,7 +110,7 @@ button:hover:not(:disabled) { background: #9fff33; }
 
   <div class="progress-box" id="progBox">
     <div class="progress-label">
-      <span>GENERATING...</span>
+      <span>GENERATING (PARALLEL)...</span>
       <span class="hourglass" id="statusIcon">⏳</span>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
@@ -237,10 +237,9 @@ function setPct(v) {
   document.getElementById("progFill").style.width = Math.min(100, v) + "%";
 }
 
-async function generateBatch(topic, audience, cats, batchNum, totalBatches) {
+async function generateBatch(topic, audience, cats, batchNum) {
   try {
-    setPct((batchNum / totalBatches) * 100);
-    log("Batch " + batchNum + "/" + totalBatches + "...", "warn");
+    log("Batch " + batchNum + " (parallel)...", "warn");
 
     var response = await fetch("/.netlify/functions/generate-hooks", {
       method: "POST",
@@ -263,14 +262,11 @@ async function generateBatch(topic, audience, cats, batchNum, totalBatches) {
     }
 
     var hooks = data.hooks || [];
-    hooks.forEach((h, i) => { h.num = allHooks.length + i + 1; });
-    allHooks = allHooks.concat(hooks);
-    
-    log("✓ " + hooks.length + " hooks (total: " + allHooks.length + ")", "success");
-    return true;
+    log("✓ Batch " + batchNum + ": " + hooks.length + " hooks", "success");
+    return hooks;
 
   } catch (e) {
-    log("ERROR: " + e.message, "error");
+    log("❌ Batch " + batchNum + " ERROR: " + e.message, "error");
     throw e;
   }
 }
@@ -301,7 +297,7 @@ async function generate() {
   document.getElementById("progBox").style.display = "block";
   document.getElementById("hooksBox").style.display = "none";
   document.getElementById("logBox").innerHTML = "";
-  setPct(0);
+  setPct(50);
 
   var batches = [
     ["Kontarian","Pembuka Cerita","Data & Statistik"],
@@ -309,12 +305,25 @@ async function generate() {
   ];
 
   try {
-    for (var i = 0; i < batches.length; i++) {
-      await generateBatch(topic, audience, batches[i], i + 1, batches.length);
-    }
+    log("Starting parallel generation...", "warn");
+    
+    // Make both requests at the SAME TIME using Promise.all
+    var batchPromises = batches.map((cats, idx) => 
+      generateBatch(topic, audience, cats, idx + 1)
+    );
+    
+    var results = await Promise.all(batchPromises);
+    
+    // Flatten and add numbering
+    results.forEach((hookArray, idx) => {
+      hookArray.forEach((h, i) => {
+        h.num = allHooks.length + i + 1;
+      });
+      allHooks = allHooks.concat(hookArray);
+    });
 
     setPct(100);
-    log("✓✓✓ 30 BILINGUAL HOOKS GENERATED", "success");
+    log("✓✓✓ " + allHooks.length + " TOTAL HOOKS GENERATED (PARALLEL)", "success");
     
     var statusIcon = document.getElementById("statusIcon");
     statusIcon.textContent = "✓";
@@ -391,7 +400,7 @@ function downloadCSV() {
     var link = document.createElement("a");
     var url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", "hooks_bilingual_30.csv");
+    link.setAttribute("download", "hooks_bilingual.csv");
     link.click();
     showSuccessPopup("✓ CSV Downloaded!");
   } catch(e) {
@@ -422,7 +431,7 @@ function downloadPDF() {
     
     var options = {
       margin: 10,
-      filename: "hooks_bilingual_30.pdf",
+      filename: "hooks_bilingual.pdf",
       image: {type: "jpeg", quality: 0.98},
       html2canvas: {scale: 2},
       jsPDF: {orientation: "landscape", unit: "mm", format: "a4"}
