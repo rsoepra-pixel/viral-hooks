@@ -7,8 +7,8 @@ exports.handler = async (event) => {
     const { topic, audience, categories } = body;
     if (!topic || !categories) return { statusCode: 400, body: JSON.stringify({error: "Missing"}) };
 
-    // Test: 10 hooks per batch (vs 25)
-    const hooksPerBatch = 10;
+    // 15 hooks per batch × 2 batches = 30 hooks total
+    const hooksPerBatch = 15;
     const prompt = `Generate ${hooksPerBatch} viral social media hooks about: ${topic}
 Target audience: ${audience || "general"}
 Categories: ${categories.join(", ")}
@@ -20,7 +20,7 @@ Instructions:
 - Each hook must be unique, engaging, and compelling for creators
 - Return ONLY a JSON array - no other text
 
-Format: [{"cat":"Category","text":"hook text here","lang":"id" or "en","platform":"TikTok|Instagram|LinkedIn|YouTube","emotion":"emotion word","why":"brief reason why this works"},...]`;
+Format: [{"cat":"Category","text":"hook text here","lang":"id" or "en","platform":"TikTok|Instagram|LinkedIn|YouTube","emotion":"emotion word","why":"brief reason why"},...]`;
 
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 60000);
@@ -34,21 +34,20 @@ Format: [{"cat":"Category","text":"hook text here","lang":"id" or "en","platform
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 2000,
+        max_tokens: 2500,
         messages: [{role: "user", content: prompt}]
       }),
       signal: controller.signal
     });
 
     if (!response.ok) {
-      const text = await response.text();
-      return { statusCode: response.status, body: JSON.stringify({error: `HTTP ${response.status}`}) };
+      return { statusCode: response.status, body: JSON.stringify({error: "API error"}) };
     }
 
     const data = await response.json();
     const text = data.content[0].text;
     const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return { statusCode: 500, body: JSON.stringify({error: "No JSON in response"}) };
+    if (!jsonMatch) return { statusCode: 500, body: JSON.stringify({error: "No JSON"}) };
     
     const hooks = JSON.parse(jsonMatch[0]);
 
