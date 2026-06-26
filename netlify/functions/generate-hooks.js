@@ -16,7 +16,8 @@ Return ONLY this format: [{"cat":"X","text":"Y","platform":"Z","emotion":"A","wh
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
@@ -34,7 +35,7 @@ Return ONLY this format: [{"cat":"X","text":"Y","platform":"Z","emotion":"A","wh
     const text = data.content[0].text;
     
     const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return { statusCode: 500, body: JSON.stringify({error: "No JSON array found"}) };
+    if (!jsonMatch) return { statusCode: 500, body: JSON.stringify({error: "No JSON found"}) };
     
     const hooks = JSON.parse(jsonMatch[0]);
 
