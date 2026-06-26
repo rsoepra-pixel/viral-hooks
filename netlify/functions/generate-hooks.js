@@ -1,31 +1,29 @@
 exports.handler = async (event) => {
   try {
     const apiKey = process.env.CLAUDE_API_KEY;
-    if (!apiKey) return { statusCode: 500, body: JSON.stringify({error: "No API key"}) };
+    if (!apiKey) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ success: false, error: "Missing API key" })
+      };
+    }
 
-    const body = JSON.parse(event.body);
-    const { topic, audience, categories } = body;
-    if (!topic || !categories) return { statusCode: 400, body: JSON.stringify({error: "Missing"}) };
+    const { topic, audience, categories } = JSON.parse(event.body);
+    if (!topic || !categories) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ success: false, error: "Missing topic or categories" })
+      };
+    }
 
-    // 10 hooks per batch, BOTH Indonesian AND English per hook
-    const hooksPerBatch = 10;
-    const prompt = `Generate ${hooksPerBatch} viral social media hooks about: ${topic}
+    const prompt = `Generate 10 viral social media hooks about: ${topic}
 Target audience: ${audience || "general"}
 Categories: ${categories.join(", ")}
 
-IMPORTANT: Each hook must include BOTH Indonesian and English versions in the SAME object.
+IMPORTANT: Each hook MUST have BOTH Indonesian AND English versions.
 
-Instructions:
-- Generate exactly ${hooksPerBatch} unique hook concepts
-- For EACH hook, provide both Indonesian (text_id) and English (text_en) versions
-- Distribute across the ${categories.length} categories
-- Each hook must be unique, engaging, compelling
-- Return ONLY JSON array - no other text
-
-Format: [{"cat":"Category","text_id":"Indonesian version","text_en":"English version","platform":"TikTok|Instagram|LinkedIn|YouTube","emotion":"emotion","why":"reason"},...]`;
-
-    const controller = new AbortController();
-    setTimeout(() => controller.abort(), 60000);
+Return ONLY valid JSON array with NO other text:
+[{"cat":"Category","text_id":"Indonesian hook","text_en":"English hook","platform":"TikTok|Instagram|LinkedIn|YouTube","emotion":"emotion"}]`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -36,32 +34,42 @@ Format: [{"cat":"Category","text_id":"Indonesian version","text_en":"English ver
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 2500,
-        messages: [{role: "user", content: prompt}]
-      }),
-      signal: controller.signal
+        max_tokens: 2000,
+        messages: [{ role: "user", content: prompt }]
+      })
     });
 
     if (!response.ok) {
-      return { statusCode: response.status, body: JSON.stringify({error: "API error"}) };
+      return {
+        statusCode: response.status,
+        body: JSON.stringify({ success: false, error: "Claude API error" })
+      };
     }
 
     const data = await response.json();
     const text = data.content[0].text;
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return { statusCode: 500, body: JSON.stringify({error: "No JSON"}) };
     
+    // Extract JSON from response
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ success: false, error: "No JSON in response" })
+      };
+    }
+
     const hooks = JSON.parse(jsonMatch[0]);
 
     return {
       statusCode: 200,
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({success: true, hooks: hooks, count: hooks.length})
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ success: true, hooks: hooks })
     };
+
   } catch (e) {
-    if (e.name === 'AbortError') {
-      return { statusCode: 408, body: JSON.stringify({error: "Timeout"}) };
-    }
-    return { statusCode: 500, body: JSON.stringify({error: e.message}) };
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ success: false, error: e.message })
+    };
   }
 };
