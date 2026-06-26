@@ -44,12 +44,11 @@ button:hover:not(:disabled) { background: #9fff33; }
 .stat-n { font-size: 24px; font-weight: bold; color: #7eff00; }
 .stat-l { font-size: 11px; color: #999; margin-top: 5px; text-transform: uppercase; }
 .hooks-grid { display: grid; gap: 10px; margin-top: 20px; }
-.hook-card { background: #0a0a0a; border: 1px solid #333; padding: 12px; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 12px; }
+.hook-card { background: #0a0a0a; border: 1px solid #333; padding: 12px; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 11px; }
 .hook-card:hover { border-color: #7eff00; background: #111; }
-.hook-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.hook-cat { color: #7eff00; font-size: 10px; text-transform: uppercase; }
-.hook-lang { background: #222; color: #999; padding: 2px 6px; border-radius: 2px; font-size: 9px; text-transform: uppercase; }
-.hook-text { margin: 6px 0; }
+.hook-cat { color: #7eff00; font-size: 10px; text-transform: uppercase; margin-bottom: 6px; }
+.hook-text { margin: 6px 0; padding: 8px; background: #0a0a0a; border-left: 2px solid #7eff00; }
+.hook-lang-label { font-size: 9px; color: #999; text-transform: uppercase; margin-top: 4px; }
 .hook-info { color: #999; font-size: 10px; margin-top: 6px; }
 .filter-bar { display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; }
 .filter-btn { background: #222; border: 1px solid #333; color: #f0f0f0; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; }
@@ -66,12 +65,12 @@ button:hover:not(:disabled) { background: #9fff33; }
     <h2>🎉 Selamat Datang</h2>
     <p style="font-size: 12px; color: #7eff00; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">CreatorCenter.id AI-Powered Tools</p>
     <p><strong>Uji Coba 90 Hari Gratis</strong></p>
-    <p>Hasilkan 30 hook viral dalam Bahasa Indonesia & English dengan AI</p>
-    <div class="feature">✓ Bilingual hooks (Indonesian + English)</div>
+    <p>Hasilkan 50 hook viral BILINGUAL (Indonesia 🇮🇩 & English 🇬🇧)</p>
+    <div class="feature">✓ Setiap hook dalam 2 bahasa</div>
     <div class="feature">✓ 5 searches per hari</div>
     <div class="feature">✓ Dukungan Claude AI Sonnet 4.6</div>
     <div class="feature">✓ Export CSV dan PDF</div>
-    <div class="feature">✓ Filter by category & language</div>
+    <div class="feature">✓ Filter by category</div>
     <button onclick="acceptTrial()">Setuju & Mulai Uji Coba 90 Hari</button>
   </div>
 </div>
@@ -98,19 +97,19 @@ button:hover:not(:disabled) { background: #9fff33; }
 
   <div class="section">
     <h3>⚡ Powered by Claude AI</h3>
-    <p style="font-size: 12px; color: #999;">Bilingual hooks (Indonesia 🇮🇩 + English 🇬🇧). 3 concurrent batches for speed.</p>
+    <p style="font-size: 12px; color: #999;">Bilingual hooks (5 concurrent batches). Setiap hook dalam 2 bahasa!</p>
   </div>
 
   <div class="section">
     <h3>Generate Hooks</h3>
     <input type="text" id="topic" placeholder="Topic (e.g. wellness coaching)">
     <input type="text" id="audience" placeholder="Audience (e.g. Indonesian parents)">
-    <button onclick="generate()" id="btnGen">Generate 30 Bilingual Hooks</button>
+    <button onclick="generate()" id="btnGen">Generate 50 Bilingual Hooks</button>
   </div>
 
   <div class="progress-box" id="progBox">
     <div class="progress-label">
-      <span>GENERATING (3 CONCURRENT)...</span>
+      <span>GENERATING (5 CONCURRENT)...</span>
       <span class="hourglass" id="statusIcon">⏳</span>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
@@ -132,8 +131,8 @@ button:hover:not(:disabled) { background: #9fff33; }
   <tr style="background:#f0f0f0; color:#000;">
     <th style="border:1px solid #000; padding:8px;">No</th>
     <th style="border:1px solid #000; padding:8px;">Category</th>
-    <th style="border:1px solid #000; padding:8px;">Hook</th>
-    <th style="border:1px solid #000; padding:8px;">Lang</th>
+    <th style="border:1px solid #000; padding:8px;">Indonesian</th>
+    <th style="border:1px solid #000; padding:8px;">English</th>
     <th style="border:1px solid #000; padding:8px;">Platform</th>
     <th style="border:1px solid #000; padding:8px;">Emotion</th>
   </tr>
@@ -296,17 +295,19 @@ async function generate() {
   document.getElementById("progBox").style.display = "block";
   document.getElementById("hooksBox").style.display = "none";
   document.getElementById("logBox").innerHTML = "";
-  setPct(33);
+  setPct(20);
 
-  // 3 batches × 10 hooks = 30 total
+  // 5 batches × 10 hooks = 50 total
   var batches = [
     ["Kontarian","Pembuka Cerita","Data & Statistik"],
     ["Ketakutan & Risiko","Aspirasi","Celah Rasa Ingin Tahu"],
-    ["Tantangan","Bukti Sosial","Cara & Transformasi"]
+    ["Tantangan","Bukti Sosial","Cara & Transformasi"],
+    ["Pengakuan & Kerentanan","Perbandingan","Percakapan"],
+    ["Humor","Nostalgia","Tren & Viral"]
   ];
 
   try {
-    log("Starting 3 concurrent batches...", "warn");
+    log("Starting 5 concurrent batches...", "warn");
     
     var batchPromises = batches.map((cats, idx) => 
       generateBatch(topic, audience, cats, idx + 1)
@@ -322,7 +323,7 @@ async function generate() {
     });
 
     setPct(100);
-    log("✓✓✓ " + allHooks.length + " TOTAL HOOKS (3 CONCURRENT)", "success");
+    log("✓✓✓ " + allHooks.length + " TOTAL HOOKS (5 CONCURRENT, BILINGUAL)", "success");
     
     var statusIcon = document.getElementById("statusIcon");
     statusIcon.textContent = "✓";
@@ -348,14 +349,14 @@ function renderHooks() {
   document.getElementById("statsBox").innerHTML =
     "<div class='stat'><div class='stat-n'>" + allHooks.length + "</div><div class='stat-l'>Hooks</div></div>" +
     "<div class='stat'><div class='stat-n'>" + cats.length + "</div><div class='stat-l'>Categories</div></div>" +
-    "<div class='stat'><div class='stat-n'>AI</div><div class='stat-l'>Claude</div></div>";
+    "<div class='stat'><div class='stat-n'>2x</div><div class='stat-l'>Languages</div></div>";
 
   var fb = document.getElementById("filterBar");
   fb.innerHTML = "";
-  ["Semua"].concat(cats).concat(["Indonesian","English"]).forEach(c => {
+  ["Semua"].concat(cats).forEach(c => {
     var b = document.createElement("button");
     b.className = "filter-btn" + (c==="Semua" ? " active" : "");
-    b.textContent = c === "Indonesian" ? "🇮🇩 Indonesian" : c === "English" ? "🇬🇧 English" : c;
+    b.textContent = c;
     b.onclick = () => filterBy(c);
     fb.appendChild(b);
   });
@@ -366,40 +367,42 @@ function renderHooks() {
 
 function filterBy(cat) {
   document.querySelectorAll(".filter-btn").forEach(b => {
-    var text = b.textContent.includes("Indonesian") ? "Indonesian" : b.textContent.includes("English") ? "English" : b.textContent;
-    b.classList.toggle("active", text === cat);
+    b.classList.toggle("active", b.textContent === cat);
   });
 
   var grid = document.getElementById("hooksGrid");
   grid.innerHTML = "";
   allHooks.forEach(h => {
-    if (cat !== "Semua" && cat !== "Indonesian" && cat !== "English" && h.cat !== cat) return;
-    if ((cat === "Indonesian" || cat === "English") && h.lang !== cat.substring(0, 2).toLowerCase()) return;
+    if (cat !== "Semua" && h.cat !== cat) return;
     var c = document.createElement("div");
     c.className = "hook-card";
-    c.onclick = () => { navigator.clipboard.writeText(h.text); alert("✓ Copied!"); };
-    var langLabel = h.lang === "id" ? "🇮🇩 ID" : "🇬🇧 EN";
-    c.innerHTML = "<div class='hook-header'><div class='hook-cat'>" + h.cat + "</div><div class='hook-lang'>" + langLabel + "</div></div>" +
-      "<div class='hook-text'>" + h.text + "</div>" +
+    c.innerHTML = "<div class='hook-cat'>" + h.cat + "</div>" +
+      "<div class='hook-text'><strong>🇮🇩 ID:</strong> " + h.text_id + "</div>" +
+      "<div class='hook-text'><strong>🇬🇧 EN:</strong> " + h.text_en + "</div>" +
       "<div class='hook-info'>" + h.platform + " · " + h.emotion + "</div>";
+    
+    c.onclick = () => {
+      navigator.clipboard.writeText(h.text_id + "\n\n" + h.text_en);
+      alert("✓ Copied (both languages)!");
+    };
     grid.appendChild(c);
   });
 }
 
 function downloadCSV() {
   try {
-    var csv = "No,Category,Hook,Lang,Platform,Emotion\n";
+    var csv = "No,Category,Indonesian,English,Platform,Emotion\n";
     allHooks.forEach(h => {
-      var lang = h.lang === "id" ? "Indonesian" : "English";
-      var text = h.text.replace(/"/g, '""');
-      csv += h.num + ',"' + h.cat + '","' + text + '",' + lang + ',' + h.platform + ',' + h.emotion + '\n';
+      var id_text = h.text_id.replace(/"/g, '""');
+      var en_text = h.text_en.replace(/"/g, '""');
+      csv += h.num + ',"' + h.cat + '","' + id_text + '","' + en_text + '",' + h.platform + ',' + h.emotion + '\n';
     });
     
     var blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
     var link = document.createElement("a");
     var url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", "hooks_bilingual_30.csv");
+    link.setAttribute("download", "hooks_bilingual_50.csv");
     link.click();
     showSuccessPopup("✓ CSV Downloaded!");
   } catch(e) {
@@ -415,13 +418,12 @@ function downloadPDF() {
     
     tbody = document.createElement("tbody");
     allHooks.forEach(h => {
-      var lang = h.lang === "id" ? "Indonesian" : "English";
       var tr = document.createElement("tr");
       tr.style.borderBottom = "1px solid #ddd";
       tr.innerHTML = "<td style='border:1px solid #ddd; padding:8px;'>" + h.num + "</td>" +
         "<td style='border:1px solid #ddd; padding:8px;'>" + h.cat + "</td>" +
-        "<td style='border:1px solid #ddd; padding:8px;'>" + h.text + "</td>" +
-        "<td style='border:1px solid #ddd; padding:8px;'>" + lang + "</td>" +
+        "<td style='border:1px solid #ddd; padding:8px;'>" + h.text_id + "</td>" +
+        "<td style='border:1px solid #ddd; padding:8px;'>" + h.text_en + "</td>" +
         "<td style='border:1px solid #ddd; padding:8px;'>" + h.platform + "</td>" +
         "<td style='border:1px solid #ddd; padding:8px;'>" + h.emotion + "</td>";
       tbody.appendChild(tr);
@@ -430,7 +432,7 @@ function downloadPDF() {
     
     var options = {
       margin: 10,
-      filename: "hooks_bilingual_30.pdf",
+      filename: "hooks_bilingual_50.pdf",
       image: {type: "jpeg", quality: 0.98},
       html2canvas: {scale: 2},
       jsPDF: {orientation: "landscape", unit: "mm", format: "a4"}
