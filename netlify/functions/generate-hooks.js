@@ -7,16 +7,19 @@ exports.handler = async (event) => {
     const { topic, audience, categories } = body;
     if (!topic || !categories) return { statusCode: 400, body: JSON.stringify({error: "Missing fields"}) };
 
-    // 25 hooks per batch (2 batches = 50 total)
-    const prompt = `Generate ${categories.length} viral hooks about: ${topic}
+    // Generate bilingual hooks: each hook has Indonesian + English version
+    const prompt = `Generate ${categories.length * 2} viral hooks about: ${topic}
 Audience: ${audience || "general"}
 Categories: ${categories.join(", ")}
 
 RULES:
-- Each hook must be different, creative, and engaging
-- Return EXACTLY ${categories.length} hooks (one per category)
+- Generate EACH hook in BOTH Indonesian AND English (2 versions per category)
+- Total: ${categories.length * 2} hooks (${categories.length} categories × 2 languages)
+- Indonesian hooks must be natural, colloquial Indonesian (Bahasa Indonesia)
+- English hooks must be engaging for international audience
+- Each must be different, creative, and compelling
 - Return ONLY valid JSON array, no other text
-- Format: [{"cat":"Category","text":"hook text here","platform":"TikTok/Instagram/LinkedIn","emotion":"emotion type","why":"why it works"},...]`;
+- Format: [{"cat":"Category","text":"hook text","lang":"id|en","platform":"TikTok/Instagram/LinkedIn","emotion":"emotion type","why":"why it works"},...]`;
 
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 60000);
@@ -30,7 +33,7 @@ RULES:
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 2000,
+        max_tokens: 3000,
         messages: [{role: "user", content: prompt}]
       }),
       signal: controller.signal
