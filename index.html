@@ -103,12 +103,12 @@ button:hover:not(:disabled) { background: #9fff33; }
     <h3>Generate Hooks</h3>
     <input type="text" id="topic" placeholder="Topic (e.g. wellness coaching)">
     <input type="text" id="audience" placeholder="Audience (e.g. Indonesian parents)">
-    <button onclick="generate()" id="btnGen">Generate 40 Bilingual Hooks</button>
+    <button onclick="generate()" id="btnGen">Generate 30 Bilingual Hooks</button>
   </div>
 
   <div class="progress-box" id="progBox">
     <div class="progress-label">
-      <span>GENERATING (4 CONCURRENT)...</span>
+      <span>GENERATING (3 CONCURRENT)...</span>
       <span class="hourglass" id="statusIcon">⏳</span>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
@@ -301,11 +301,11 @@ async function generate() {
     ["Kontarian","Pembuka Cerita","Data & Statistik"],
     ["Ketakutan & Risiko","Aspirasi","Celah Rasa Ingin Tahu"],
     ["Tantangan","Bukti Sosial","Cara & Transformasi"],
-    ["Pengakuan & Kerentanan","Perbandingan","Percakapan"]
+    [
   ];
 
   try {
-    log("Starting 4 concurrent batches...", "warn");
+    log("Starting 3 concurrent batches...", "warn");
     
     var batchPromises = batches.map((cats, idx) => 
       generateBatch(topic, audience, cats, idx + 1)
@@ -400,7 +400,7 @@ function downloadCSV() {
     var link = document.createElement("a");
     var url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", "hooks_bilingual_40.csv");
+    link.setAttribute("download", "hooks_bilingual_30.csv");
     link.click();
     showSuccessPopup("✓ CSV Downloaded!");
   } catch(e) {
@@ -430,7 +430,7 @@ function downloadPDF() {
     
     var options = {
       margin: 10,
-      filename: "hooks_bilingual_40.pdf",
+      filename: "hooks_bilingual_30.pdf",
       image: {type: "jpeg", quality: 0.98},
       html2canvas: {scale: 2},
       jsPDF: {orientation: "landscape", unit: "mm", format: "a4"}
