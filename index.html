@@ -3,236 +3,85 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Viral Hooks - CreatorCenter.id</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<title>Viral Hooks</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #0a0a0a; color: #f0f0f0; font-family: system-ui; padding: 20px; }
 .container { max-width: 900px; margin: 0 auto; }
 .section { background: #111; border: 1px solid #222; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-h3 { color: #7eff00; margin-bottom: 15px; font-size: 14px; text-transform: uppercase; }
-input, button { padding: 10px; width: 100%; margin-bottom: 10px; border-radius: 4px; font-size: 13px; border: 1px solid #333; }
-input { background: #0a0a0a; color: #f0f0f0; }
-button { background: #7eff00; color: #000; font-weight: bold; border: none; cursor: pointer; }
+h1 { color: #7eff00; margin-bottom: 20px; }
+input { background: #0a0a0a; color: #f0f0f0; padding: 10px; width: 100%; margin-bottom: 10px; border: 1px solid #333; border-radius: 4px; }
+button { background: #7eff00; color: #000; padding: 12px; width: 100%; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 14px; }
 button:disabled { background: #666; }
-.progress-box { background: #0a0a0a; border: 1px solid #333; padding: 20px; border-radius: 4px; display: none; margin-bottom: 20px; }
-.log-box { background: #000; border: 1px solid #333; padding: 15px; border-radius: 4px; max-height: 300px; overflow-y: auto; font-size: 11px; font-family: monospace; }
+.log { background: #000; border: 1px solid #333; padding: 15px; border-radius: 4px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px; margin: 10px 0; }
 .log-line { margin: 3px 0; }
 .success { color: #7eff00; }
 .error { color: #ff7a4a; }
-.warn { color: #f59e0b; }
-.hooks-section { display: none; margin-top: 20px; }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
-.stat { background: #0a0a0a; border: 1px solid #333; padding: 15px; border-radius: 4px; text-align: center; }
-.stat-n { font-size: 24px; color: #7eff00; font-weight: bold; }
-.hooks-grid { display: grid; gap: 10px; }
-.hook-card { background: #0a0a0a; border: 1px solid #333; padding: 12px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-.hook-cat { color: #7eff00; font-size: 10px; text-transform: uppercase; margin-bottom: 6px; }
-.hook-text { margin: 6px 0; padding: 8px; background: #000; border-left: 2px solid #7eff00; }
-.export-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+.hooks { display: none; margin-top: 20px; }
+.hook-card { background: #0a0a0a; border: 1px solid #333; padding: 12px; margin: 10px 0; border-radius: 4px; cursor: pointer; }
+.hook-card:hover { border-color: #7eff00; }
 </style>
 </head>
 <body>
 
 <div class="container">
   <div class="section">
-    <h3>⚡ Viral Hooks Generator</h3>
-    <p style="font-size: 12px; color: #999; margin-bottom: 15px;">30 Bilingual Hooks (3 concurrent batches)</p>
+    <h1>⚡ Viral Hooks Generator</h1>
+    <p style="color: #999; margin-bottom: 15px;">30 Bilingual Hooks (3 concurrent batches)</p>
     
-    <input type="text" id="topic" placeholder="Topic (e.g. wellness coaching)" />
-    <input type="text" id="audience" placeholder="Audience (e.g. Indonesian parents)" />
-    <button id="btnGen" onclick="handleGenerate()">Generate 30 Bilingual Hooks</button>
+    <input type="text" id="topic" placeholder="Topic" />
+    <input type="text" id="audience" placeholder="Audience" />
+    <button onclick="generate()">Generate 30 Bilingual Hooks</button>
+    
+    <div class="log" id="log"></div>
   </div>
 
-  <div id="progBox" class="progress-box">
-    <p style="margin-bottom: 10px;">GENERATING (3 CONCURRENT)... ⏳</p>
-    <div class="log-box" id="logBox"></div>
-  </div>
-
-  <div id="hooksBox" class="hooks-section">
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-n" id="hookCount">0</div>
-        <div style="font-size: 11px; color: #999;">Hooks</div>
-      </div>
-      <div class="stat">
-        <div class="stat-n" id="catCount">0</div>
-        <div style="font-size: 11px; color: #999;">Categories</div>
-      </div>
-      <div class="stat">
-        <div class="stat-n">2x</div>
-        <div style="font-size: 11px; color: #999;">Languages</div>
-      </div>
-    </div>
-    <div class="hooks-grid" id="hooksGrid"></div>
-    <div class="export-buttons">
-      <button onclick="downloadCSV()">📥 Download CSV</button>
-      <button onclick="downloadPDF()">📄 Download PDF</button>
+  <div id="hooksDiv" class="hooks">
+    <div class="section">
+      <p style="color: #7eff00; font-weight: bold; margin-bottom: 15px;">Generated Hooks:</p>
+      <div id="hooksList"></div>
     </div>
   </div>
 </div>
 
-<table id="pdfTable" style="display:none;">
-  <tr style="background:#f0f0f0; color:#000;">
-    <th style="border:1px solid #000; padding:8px;">No</th>
-    <th style="border:1px solid #000; padding:8px;">Category</th>
-    <th style="border:1px solid #000; padding:8px;">Indonesian</th>
-    <th style="border:1px solid #000; padding:8px;">English</th>
-    <th style="border:1px solid #000; padding:8px;">Platform</th>
-  </tr>
-</table>
-
 <script>
-var allHooks = [];
-var isGenerating = false;
+let allHooks = [];
+let isGenerating = false;
 
-function log(msg, type) {
-  var div = document.createElement("div");
-  div.className = "log-line " + (type || "success");
+function log(msg, type = 'success') {
+  const div = document.createElement('div');
+  div.className = 'log-line ' + type;
   div.textContent = msg;
-  document.getElementById("logBox").appendChild(div);
-  document.getElementById("logBox").scrollTop = 999999;
+  document.getElementById('log').appendChild(div);
+  document.getElementById('log').scrollTop = 99999;
 }
 
-function handleGenerate() {
-  var topic = document.getElementById("topic").value.trim();
-  var audience = document.getElementById("audience").value.trim();
+async function generate() {
+  const topic = document.getElementById('topic').value.trim();
+  const audience = document.getElementById('audience').value.trim();
   
   if (!topic) {
-    alert("Enter a topic");
+    alert('Enter topic');
     return;
   }
   
   if (isGenerating) {
-    alert("Already generating...");
+    alert('Already generating');
     return;
   }
 
   isGenerating = true;
-  document.getElementById("btnGen").disabled = true;
+  document.querySelector('button').disabled = true;
   allHooks = [];
-  document.getElementById("progBox").style.display = "block";
-  document.getElementById("hooksBox").style.display = "none";
-  document.getElementById("logBox").innerHTML = "";
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('hooksDiv').style.display = 'none';
 
-  var batches = [
-    ["Kontarian","Pembuka Cerita","Data & Statistik"],
-    ["Ketakutan & Risiko","Aspirasi","Celah Rasa Ingin Tahu"],
-    ["Tantangan","Bukti Sosial","Cara & Transformasi"]
+  const batches = [
+    ['Kontarian', 'Pembuka Cerita', 'Data & Statistik'],
+    ['Ketakutan & Risiko', 'Aspirasi', 'Celah Rasa Ingin Tahu'],
+    ['Tantangan', 'Bukti Sosial', 'Cara & Transformasi']
   ];
 
-  log("Starting 3 concurrent batches...", "warn");
+  log('Starting 3 batches...', 'warn');
 
-  Promise.all(batches.map((cats, i) => fetchBatch(topic, audience, cats, i + 1)))
-    .then(results => {
-      results.forEach(hookArr => {
-        allHooks = allHooks.concat(hookArr);
-      });
-      log("✓ SUCCESS: " + allHooks.length + " hooks", "success");
-      renderHooks();
-      document.getElementById("hooksBox").style.display = "block";
-    })
-    .catch(err => {
-      log("ERROR: " + err.message, "error");
-    })
-    .finally(() => {
-      isGenerating = false;
-      document.getElementById("btnGen").disabled = false;
-    });
-}
-
-function fetchBatch(topic, audience, cats, batchNum) {
-  log("Batch " + batchNum + " starting...", "warn");
-  
-  return fetch("/.netlify/functions/generate-hooks", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      topic: topic,
-      audience: audience,
-      categories: cats
-    })
-  })
-  .then(r => {
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    return r.json();
-  })
-  .then(data => {
-    if (!data.success) throw new Error(data.error || "Failed");
-    var hooks = data.hooks || [];
-    log("✓ Batch " + batchNum + ": " + hooks.length + " hooks", "success");
-    return hooks;
-  })
-  .catch(err => {
-    log("✗ Batch " + batchNum + " ERROR: " + err.message, "error");
-    throw err;
-  });
-}
-
-function renderHooks() {
-  var cats = [];
-  allHooks.forEach(h => {
-    if (!cats.includes(h.cat)) cats.push(h.cat);
-  });
-  
-  document.getElementById("hookCount").textContent = allHooks.length;
-  document.getElementById("catCount").textContent = cats.length;
-  
-  var grid = document.getElementById("hooksGrid");
-  grid.innerHTML = "";
-  
-  allHooks.forEach((h, idx) => {
-    var card = document.createElement("div");
-    card.className = "hook-card";
-    card.innerHTML = 
-      "<div class='hook-cat'>" + h.cat + "</div>" +
-      "<div class='hook-text'><strong>🇮🇩 ID:</strong> " + h.text_id + "</div>" +
-      "<div class='hook-text'><strong>🇬🇧 EN:</strong> " + h.text_en + "</div>" +
-      "<div style='color:#999; font-size:10px; margin-top:6px;'>" + h.platform + " • " + h.emotion + "</div>";
-    
-    card.onclick = function() {
-      navigator.clipboard.writeText(h.text_id + "\n\n" + h.text_en);
-      alert("✓ Copied!");
-    };
-    
-    grid.appendChild(card);
-  });
-}
-
-function downloadCSV() {
-  var csv = "No,Category,Indonesian,English,Platform,Emotion\n";
-  allHooks.forEach((h, i) => {
-    csv += (i+1) + ',"' + h.cat + '","' + h.text_id.replace(/"/g, '""') + '","' + h.text_en.replace(/"/g, '""') + '",' + h.platform + ',' + h.emotion + '\n';
-  });
-  var blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement("a");
-  a.href = url;
-  a.download = "hooks_30.csv";
-  a.click();
-}
-
-function downloadPDF() {
-  var table = document.getElementById("pdfTable");
-  var tbody = table.querySelector("tbody");
-  if (tbody) tbody.remove();
-  tbody = document.createElement("tbody");
-  
-  allHooks.forEach((h, i) => {
-    var tr = document.createElement("tr");
-    tr.innerHTML = 
-      "<td style='border:1px solid #000; padding:8px;'>" + (i+1) + "</td>" +
-      "<td style='border:1px solid #000; padding:8px;'>" + h.cat + "</td>" +
-      "<td style='border:1px solid #000; padding:8px;'>" + h.text_id + "</td>" +
-      "<td style='border:1px solid #000; padding:8px;'>" + h.text_en + "</td>" +
-      "<td style='border:1px solid #000; padding:8px;'>" + h.platform + "</td>";
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-  
-  html2pdf().set({filename: "hooks_30.pdf"}).from(table).save();
-}
-</script>
-
-</body>
-</html>
+  try {
