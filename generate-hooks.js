@@ -1,26 +1,27 @@
 exports.handler = async (event, context) => {
-  // Only allow POST
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({error: 'Method not allowed'}),
-      headers: {'Content-Type': 'application/json'}
-    };
-  }
-
   try {
-    const { topic, audience, categories } = JSON.parse(event.body);
+    // Only POST
+    if (event.httpMethod !== 'POST') {
+      return {
+        statusCode: 405,
+        body: JSON.stringify({error: 'Method not allowed'}),
+        headers: {'Content-Type': 'application/json'}
+      };
+    }
+
+    const body = JSON.parse(event.body);
+    const { topic, audience, categories } = body;
     const apiKey = process.env.CLAUDE_API_KEY;
 
     if (!apiKey) {
       return {
         statusCode: 500,
-        body: JSON.stringify({error: 'API key not configured'}),
+        body: JSON.stringify({error: 'API key not configured on server'}),
         headers: {'Content-Type': 'application/json'}
       };
     }
 
-    if (!topic || !categories) {
+    if (!topic || !categories || !Array.isArray(categories)) {
       return {
         statusCode: 400,
         body: JSON.stringify({error: 'Missing topic or categories'}),
@@ -35,6 +36,9 @@ exports.handler = async (event, context) => {
       `Return ONLY valid JSON array []. Each item: {cat, text, platform, emotion, why}.\n` +
       `Be concise. Include [ and ].`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -46,12 +50,14 @@ exports.handler = async (event, context) => {
         max_tokens: 5000,
         messages: [{ role: 'user', content: prompt }]
       }),
-      timeout: 60000
+      signal: controller.signal
     });
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
-      const errorData = await response.json();
-      const errorMsg = errorData.error?.message || 'Unknown error';
+      const errData = await response.json();
+      const errorMsg = errData.error?.message || 'Unknown error';
       return {
         statusCode: response.status,
         body: JSON.stringify({error: `Claude API error: ${errorMsg}`}),
@@ -70,7 +76,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Extract JSON from response
+    // Parse JSON from response
     const firstBracket = text.indexOf('[');
     if (firstBracket < 0) {
       return {
@@ -115,10 +121,12 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Handler error:', error.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({error: error.message || 'Server error'}),
+      body: JSON.stringify({
+        error: `Server error: ${error.message}`
+      }),
       headers: {'Content-Type': 'application/json'}
     };
   }
