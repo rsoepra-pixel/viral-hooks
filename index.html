@@ -3,85 +3,431 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Viral Hooks</title>
+<title>Viral Hooks - CreatorCenter.id</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0a0a0a; color: #f0f0f0; font-family: system-ui; padding: 20px; }
+body { background: #0a0a0a; color: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; min-height: 100vh; }
 .container { max-width: 900px; margin: 0 auto; }
+header { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #222; }
+.brand { font-weight: bold; font-size: 18px; color: #7eff00; }
+.trial-badge { background: #7eff00; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+.trial-info { font-size: 12px; color: #999; margin-top: 8px; }
 .section { background: #111; border: 1px solid #222; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-h1 { color: #7eff00; margin-bottom: 20px; }
-input { background: #0a0a0a; color: #f0f0f0; padding: 10px; width: 100%; margin-bottom: 10px; border: 1px solid #333; border-radius: 4px; }
-button { background: #7eff00; color: #000; padding: 12px; width: 100%; border: none; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 14px; }
-button:disabled { background: #666; }
-.log { background: #000; border: 1px solid #333; padding: 15px; border-radius: 4px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px; margin: 10px 0; }
-.log-line { margin: 3px 0; }
-.success { color: #7eff00; }
-.error { color: #ff7a4a; }
-.hooks { display: none; margin-top: 20px; }
-.hook-card { background: #0a0a0a; border: 1px solid #333; padding: 12px; margin: 10px 0; border-radius: 4px; cursor: pointer; }
-.hook-card:hover { border-color: #7eff00; }
+.section h3 { margin-bottom: 15px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #7eff00; }
+input { background: #0a0a0a; border: 1px solid #333; color: #f0f0f0; padding: 10px; border-radius: 4px; width: 100%; margin-bottom: 10px; font-size: 13px; }
+button { background: #7eff00; color: #000; border: none; padding: 12px 24px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 13px; width: 100%; }
+button:disabled { background: #666; cursor: not-allowed; }
+button:hover:not(:disabled) { background: #9fff33; }
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: #111; border: 2px solid #7eff00; padding: 40px; border-radius: 8px; text-align: center; max-width: 600px; }
+.modal-box h2 { color: #7eff00; margin-bottom: 20px; font-size: 28px; }
+.modal-box p { margin: 15px 0; line-height: 1.6; }
+.feature { background: #0a0a0a; padding: 12px; margin: 12px 0; border-left: 3px solid #7eff00; text-align: left; }
+.progress-box { background: #0a0a0a; border: 1px solid #333; padding: 20px; border-radius: 4px; margin-bottom: 20px; display: none; }
+.progress-label { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.hourglass { font-size: 20px; animation: hourglassFlip 1.5s infinite; }
+@keyframes hourglassFlip { 0% { transform: rotateZ(0deg); } 50% { transform: rotateZ(180deg); } }
+.checkmark { color: #7eff00; font-size: 20px; animation: checkmarkPop 0.6s ease-out; }
+@keyframes checkmarkPop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+.progress-bar { background: #222; height: 6px; border-radius: 3px; margin: 10px 0; overflow: hidden; }
+.progress-fill { background: #7eff00; height: 100%; width: 0%; transition: width 0.3s; }
+.log-box { background: #0a0a0a; border: 1px solid #333; padding: 15px; border-radius: 4px; max-height: 300px; overflow-y: auto; font-size: 11px; font-family: monospace; margin-top: 15px; }
+.log-line { margin: 4px 0; }
+.log-success { color: #7eff00; }
+.log-error { color: #ff7a4a; }
+.log-warn { color: #f59e0b; }
+.hooks-section { display: none; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+.stat { background: #0a0a0a; border: 1px solid #333; padding: 15px; border-radius: 4px; text-align: center; }
+.stat-n { font-size: 24px; font-weight: bold; color: #7eff00; }
+.stat-l { font-size: 11px; color: #999; margin-top: 5px; text-transform: uppercase; }
+.hooks-grid { display: grid; gap: 10px; margin-top: 20px; }
+.hook-card { background: #0a0a0a; border: 1px solid #333; padding: 12px; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 11px; }
+.hook-card:hover { border-color: #7eff00; background: #111; }
+.hook-cat { color: #7eff00; font-size: 10px; text-transform: uppercase; margin-bottom: 6px; }
+.hook-text { margin: 6px 0; padding: 8px; background: #0a0a0a; border-left: 2px solid #7eff00; }
+.hook-info { color: #999; font-size: 10px; margin-top: 6px; }
+.filter-bar { display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; }
+.filter-btn { background: #222; border: 1px solid #333; color: #f0f0f0; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; }
+.filter-btn.active { background: #7eff00; color: #000; }
+.export-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+.export-buttons button { font-size: 12px; padding: 10px; }
+#pdfTable { display: none; }
 </style>
 </head>
 <body>
 
+<div id="trialModal" class="modal-overlay">
+  <div class="modal-box">
+    <h2>🎉 Selamat Datang</h2>
+    <p style="font-size: 12px; color: #7eff00; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">CreatorCenter.id AI-Powered Tools</p>
+    <p><strong>Uji Coba 90 Hari Gratis</strong></p>
+    <p>Hasilkan 30 hook viral BILINGUAL (Indonesia 🇮🇩 & English 🇬🇧)</p>
+    <div class="feature">✓ Setiap hook dalam 2 bahasa</div>
+    <div class="feature">✓ 5 searches per hari</div>
+    <div class="feature">✓ Dukungan Claude AI Sonnet 4.6</div>
+    <div class="feature">✓ Export CSV dan PDF</div>
+    <div class="feature">✓ 3 concurrent batches untuk kecepatan</div>
+    <button onclick="acceptTrial()">Setuju & Mulai Uji Coba 90 Hari</button>
+  </div>
+</div>
+
+<div id="successPopup" class="modal-overlay">
+  <div class="modal-box">
+    <div style="font-size: 48px; margin-bottom: 20px;">✓</div>
+    <p id="successMsg">SUCCESS!</p>
+    <button onclick="closeSuccessPopup()" style="margin-top: 20px; width: auto;">OK</button>
+  </div>
+</div>
+
 <div class="container">
+  <header>
+    <div>
+      <div class="brand">@CREATORCENTER.ID</div>
+      <div class="trial-badge">UJI COBA 90 HARI</div>
+      <div class="trial-info">
+        <span id="trialDays">90</span> hari tersisa | 
+        <span id="dailyUsage">5</span>/5 searches hari ini
+      </div>
+    </div>
+  </header>
+
   <div class="section">
-    <h1>⚡ Viral Hooks Generator</h1>
-    <p style="color: #999; margin-bottom: 15px;">30 Bilingual Hooks (3 concurrent batches)</p>
-    
-    <input type="text" id="topic" placeholder="Topic" />
-    <input type="text" id="audience" placeholder="Audience" />
-    <button onclick="generate()">Generate 30 Bilingual Hooks</button>
-    
-    <div class="log" id="log"></div>
+    <h3>⚡ Powered by Claude AI</h3>
+    <p style="font-size: 12px; color: #999;">Bilingual hooks (3 concurrent batches = 30 hooks). Setiap hook dalam 2 bahasa!</p>
   </div>
 
-  <div id="hooksDiv" class="hooks">
-    <div class="section">
-      <p style="color: #7eff00; font-weight: bold; margin-bottom: 15px;">Generated Hooks:</p>
-      <div id="hooksList"></div>
+  <div class="section">
+    <h3>Generate Hooks</h3>
+    <input type="text" id="topic" placeholder="Topic (e.g. wellness coaching)">
+    <input type="text" id="audience" placeholder="Audience (e.g. Indonesian parents)">
+    <button onclick="generate()" id="btnGen">Generate 30 Bilingual Hooks</button>
+  </div>
+
+  <div class="progress-box" id="progBox">
+    <div class="progress-label">
+      <span>GENERATING (3 CONCURRENT)...</span>
+      <span class="hourglass" id="statusIcon">⏳</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+    <div class="log-box" id="logBox"></div>
+  </div>
+
+  <div class="hooks-section" id="hooksBox">
+    <div class="stats" id="statsBox"></div>
+    <div class="filter-bar" id="filterBar"></div>
+    <div class="hooks-grid" id="hooksGrid"></div>
+    <div class="export-buttons">
+      <button onclick="downloadCSV()">📥 Download CSV</button>
+      <button onclick="downloadPDF()">📄 Download PDF</button>
     </div>
   </div>
 </div>
 
-<script>
-let allHooks = [];
-let isGenerating = false;
+<table id="pdfTable" style="width:100%; border-collapse:collapse;">
+  <tr style="background:#f0f0f0; color:#000;">
+    <th style="border:1px solid #000; padding:8px;">No</th>
+    <th style="border:1px solid #000; padding:8px;">Category</th>
+    <th style="border:1px solid #000; padding:8px;">Indonesian</th>
+    <th style="border:1px solid #000; padding:8px;">English</th>
+    <th style="border:1px solid #000; padding:8px;">Platform</th>
+    <th style="border:1px solid #000; padding:8px;">Emotion</th>
+  </tr>
+</table>
 
-function log(msg, type = 'success') {
-  const div = document.createElement('div');
-  div.className = 'log-line ' + type;
-  div.textContent = msg;
-  document.getElementById('log').appendChild(div);
-  document.getElementById('log').scrollTop = 99999;
+<script>
+var allHooks = [];
+var isGenerating = false;
+var hasLocalStorage = true;
+
+function checkLocalStorage() {
+  try {
+    localStorage.setItem("__test__", "__test__");
+    localStorage.removeItem("__test__");
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+function initTrial() {
+  hasLocalStorage = checkLocalStorage();
+  var accepted = getStorage("trial_accepted");
+  if (!accepted) {
+    document.getElementById("trialModal").classList.add("show");
+  } else {
+    updateTrialInfo();
+  }
+}
+
+function acceptTrial() {
+  setStorage("trial_accepted", "true");
+  setStorage("trial_start", new Date().toISOString());
+  setStorage("daily_usage", JSON.stringify({}));
+  document.getElementById("trialModal").classList.remove("show");
+  updateTrialInfo();
+}
+
+function getStorage(key) {
+  if (!hasLocalStorage) return sessionStorage.getItem(key);
+  return localStorage.getItem(key);
+}
+
+function setStorage(key, val) {
+  if (hasLocalStorage) {
+    localStorage.setItem(key, val);
+  } else {
+    sessionStorage.setItem(key, val);
+  }
+}
+
+function updateTrialInfo() {
+  var trialStart = getStorage("trial_start");
+  if (!trialStart) return;
+  var start = new Date(trialStart);
+  var now = new Date();
+  var end = new Date(start.getTime() + 90 * 24 * 60 * 60 * 1000);
+  var daysLeft = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+  document.getElementById("trialDays").textContent = Math.max(0, daysLeft);
+  
+  var today = new Date().toISOString().split('T')[0];
+  var dailyUsage = JSON.parse(getStorage("daily_usage") || "{}");
+  var todayUsage = dailyUsage[today] || 0;
+  document.getElementById("dailyUsage").textContent = Math.max(0, 5 - todayUsage);
+}
+
+function canUseToday() {
+  var today = new Date().toISOString().split('T')[0];
+  var dailyUsage = JSON.parse(getStorage("daily_usage") || "{}");
+  var todayUsage = dailyUsage[today] || 0;
+  return todayUsage < 5;
+}
+
+function recordUsage() {
+  var today = new Date().toISOString().split('T')[0];
+  var dailyUsage = JSON.parse(getStorage("daily_usage") || "{}");
+  dailyUsage[today] = (dailyUsage[today] || 0) + 1;
+  setStorage("daily_usage", JSON.stringify(dailyUsage));
+  updateTrialInfo();
+}
+
+function showSuccessPopup(msg) {
+  document.getElementById("successMsg").textContent = msg;
+  document.getElementById("successPopup").classList.add("show");
+}
+
+function closeSuccessPopup() {
+  document.getElementById("successPopup").classList.remove("show");
+}
+
+function log(m, t) {
+  if (!t) t = "success";
+  var el = document.createElement("div");
+  el.className = "log-line log-" + t;
+  el.textContent = m;
+  document.getElementById("logBox").appendChild(el);
+  document.getElementById("logBox").scrollTop = 999999;
+}
+
+function setPct(v) {
+  document.getElementById("progFill").style.width = Math.min(100, v) + "%";
+}
+
+async function generateBatch(topic, audience, cats, batchNum) {
+  try {
+    log("Batch " + batchNum + " (concurrent)...", "warn");
+    var response = await fetch("/.netlify/functions/generate-hooks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        topic: topic,
+        audience: audience,
+        categories: cats
+      })
+    });
+    if (!response.ok) {
+      var errData = await response.json();
+      throw new Error(errData.error || "HTTP " + response.status);
+    }
+    var data = await response.json();
+    if (!data.success) {
+      throw new Error(data.error || "Unknown error");
+    }
+    var hooks = data.hooks || [];
+    log("✓ Batch " + batchNum + ": " + hooks.length + " hooks", "success");
+    return hooks;
+  } catch (e) {
+    log("❌ Batch " + batchNum + " ERROR: " + e.message, "error");
+    throw e;
+  }
 }
 
 async function generate() {
-  const topic = document.getElementById('topic').value.trim();
-  const audience = document.getElementById('audience').value.trim();
+  var topic = document.getElementById("topic").value.trim();
+  var audience = document.getElementById("audience").value.trim();
   
   if (!topic) {
-    alert('Enter topic');
+    alert("Please enter a topic");
     return;
   }
   
+  if (!canUseToday()) {
+    alert("Daily limit reached!");
+    return;
+  }
+
   if (isGenerating) {
-    alert('Already generating');
+    alert("Generation in progress...");
     return;
   }
 
   isGenerating = true;
-  document.querySelector('button').disabled = true;
+  document.getElementById("btnGen").disabled = true;
   allHooks = [];
-  document.getElementById('log').innerHTML = '';
-  document.getElementById('hooksDiv').style.display = 'none';
+  document.getElementById("progBox").style.display = "block";
+  document.getElementById("hooksBox").style.display = "none";
+  document.getElementById("logBox").innerHTML = "";
+  setPct(33);
 
-  const batches = [
-    ['Kontarian', 'Pembuka Cerita', 'Data & Statistik'],
-    ['Ketakutan & Risiko', 'Aspirasi', 'Celah Rasa Ingin Tahu'],
-    ['Tantangan', 'Bukti Sosial', 'Cara & Transformasi']
+  var batches = [
+    ["Kontarian","Pembuka Cerita","Data & Statistik"],
+    ["Ketakutan & Risiko","Aspirasi","Celah Rasa Ingin Tahu"],
+    ["Tantangan","Bukti Sosial","Cara & Transformasi"]
   ];
 
-  log('Starting 3 batches...', 'warn');
-
   try {
+    log("Starting 3 concurrent batches...", "warn");
+    var batchPromises = batches.map((cats, idx) => generateBatch(topic, audience, cats, idx + 1));
+    var results = await Promise.all(batchPromises);
+    
+    results.forEach((hookArray, idx) => {
+      hookArray.forEach((h, i) => {
+        h.num = allHooks.length + i + 1;
+      });
+      allHooks = allHooks.concat(hookArray);
+    });
+
+    setPct(100);
+    log("✓✓✓ " + allHooks.length + " TOTAL HOOKS (BILINGUAL)", "success");
+    
+    document.getElementById("statusIcon").textContent = "✓";
+    document.getElementById("statusIcon").className = "checkmark";
+    recordUsage();
+    renderHooks();
+  } catch (e) {
+    log("Generation failed", "error");
+  }
+
+  isGenerating = false;
+  document.getElementById("btnGen").disabled = false;
+}
+
+function renderHooks() {
+  var cats = [];
+  allHooks.forEach(h => {
+    if (!cats.includes(h.cat)) cats.push(h.cat);
+  });
+
+  document.getElementById("statsBox").innerHTML =
+    "<div class='stat'><div class='stat-n'>" + allHooks.length + "</div><div class='stat-l'>Hooks</div></div>" +
+    "<div class='stat'><div class='stat-n'>" + cats.length + "</div><div class='stat-l'>Categories</div></div>" +
+    "<div class='stat'><div class='stat-n'>2x</div><div class='stat-l'>Languages</div></div>";
+
+  var fb = document.getElementById("filterBar");
+  fb.innerHTML = "";
+  ["Semua"].concat(cats).forEach(c => {
+    var b = document.createElement("button");
+    b.className = "filter-btn" + (c==="Semua" ? " active" : "");
+    b.textContent = c;
+    b.onclick = () => filterBy(c);
+    fb.appendChild(b);
+  });
+
+  filterBy("Semua");
+  document.getElementById("hooksBox").style.display = "block";
+}
+
+function filterBy(cat) {
+  document.querySelectorAll(".filter-btn").forEach(b => {
+    b.classList.toggle("active", b.textContent === cat);
+  });
+
+  var grid = document.getElementById("hooksGrid");
+  grid.innerHTML = "";
+  allHooks.forEach(h => {
+    if (cat !== "Semua" && h.cat !== cat) return;
+    var c = document.createElement("div");
+    c.className = "hook-card";
+    c.innerHTML = "<div class='hook-cat'>" + h.cat + "</div>" +
+      "<div class='hook-text'><strong>🇮🇩 ID:</strong> " + h.text_id + "</div>" +
+      "<div class='hook-text'><strong>🇬🇧 EN:</strong> " + h.text_en + "</div>" +
+      "<div class='hook-info'>" + h.platform + " · " + h.emotion + "</div>";
+    c.onclick = () => {
+      navigator.clipboard.writeText(h.text_id + "\n\n" + h.text_en);
+      alert("✓ Copied!");
+    };
+    grid.appendChild(c);
+  });
+}
+
+function downloadCSV() {
+  try {
+    var csv = "No,Category,Indonesian,English,Platform,Emotion\n";
+    allHooks.forEach(h => {
+      var id_text = h.text_id.replace(/"/g, '""');
+      var en_text = h.text_en.replace(/"/g, '""');
+      csv += h.num + ',"' + h.cat + '","' + id_text + '","' + en_text + '",' + h.platform + ',' + h.emotion + '\n';
+    });
+    var blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
+    var link = document.createElement("a");
+    var url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "hooks_bilingual_30.csv");
+    link.click();
+    showSuccessPopup("✓ CSV Downloaded!");
+  } catch(e) {
+    alert("Download failed");
+  }
+}
+
+function downloadPDF() {
+  try {
+    var table = document.getElementById("pdfTable");
+    var tbody = table.querySelector("tbody");
+    if (tbody) tbody.remove();
+    tbody = document.createElement("tbody");
+    allHooks.forEach(h => {
+      var tr = document.createElement("tr");
+      tr.style.borderBottom = "1px solid #ddd";
+      tr.innerHTML = "<td style='border:1px solid #ddd; padding:8px;'>" + h.num + "</td>" +
+        "<td style='border:1px solid #ddd; padding:8px;'>" + h.cat + "</td>" +
+        "<td style='border:1px solid #ddd; padding:8px;'>" + h.text_id + "</td>" +
+        "<td style='border:1px solid #ddd; padding:8px;'>" + h.text_en + "</td>" +
+        "<td style='border:1px solid #ddd; padding:8px;'>" + h.platform + "</td>" +
+        "<td style='border:1px solid #ddd; padding:8px;'>" + h.emotion + "</td>";
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    var options = {
+      margin: 10,
+      filename: "hooks_bilingual_30.pdf",
+      image: {type: "jpeg", quality: 0.98},
+      html2canvas: {scale: 2},
+      jsPDF: {orientation: "landscape", unit: "mm", format: "a4"}
+    };
+    html2pdf().set(options).from(table).save();
+    showSuccessPopup("✓ PDF Downloaded!");
+  } catch(e) {
+    alert("Download failed");
+  }
+}
+
+window.onload = function() {
+  initTrial();
+};
+</script>
+
+</body>
+</html>
