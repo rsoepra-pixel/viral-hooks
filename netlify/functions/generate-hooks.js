@@ -7,19 +7,20 @@ exports.handler = async (event) => {
     const { topic, audience, categories } = body;
     if (!topic || !categories) return { statusCode: 400, body: JSON.stringify({error: "Missing fields"}) };
 
-    // Generate bilingual hooks: each hook has Indonesian + English version
-    const prompt = `Generate ${categories.length * 2} viral hooks about: ${topic}
+    // Generate 25 hooks per batch, bilingual (50 total for 2 batches)
+    const hooksPerBatch = 25;
+    const prompt = `Generate ${hooksPerBatch} viral hooks about: ${topic}
 Audience: ${audience || "general"}
 Categories: ${categories.join(", ")}
 
 RULES:
-- Generate EACH hook in BOTH Indonesian AND English (2 versions per category)
-- Total: ${categories.length * 2} hooks (${categories.length} categories × 2 languages)
-- Indonesian hooks must be natural, colloquial Indonesian (Bahasa Indonesia)
-- English hooks must be engaging for international audience
-- Each must be different, creative, and compelling
-- Return ONLY valid JSON array, no other text
-- Format: [{"cat":"Category","text":"hook text","lang":"id|en","platform":"TikTok/Instagram/LinkedIn","emotion":"emotion type","why":"why it works"},...]`;
+- Generate EXACTLY ${hooksPerBatch} hooks total
+- Distribute hooks across ${categories.length} categories and 2 languages (Indonesian & English)
+- Use ALL provided categories
+- Each hook must be different, creative, and compelling
+- Mix of Indonesian (id) and English (en) language hooks
+- Return ONLY valid JSON array, no preamble
+- Format EXACTLY: [{"cat":"Category","text":"hook text","lang":"id"|"en","platform":"TikTok/Instagram/LinkedIn","emotion":"emotion type","why":"why it works"},...]`;
 
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 60000);
@@ -46,7 +47,7 @@ RULES:
     const data = await response.json();
     const text = data.content[0].text;
     const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return { statusCode: 500, body: JSON.stringify({error: "No JSON in response"}) };
+    if (!jsonMatch) return { statusCode: 500, body: JSON.stringify({error: "No JSON"}) };
     
     const hooks = JSON.parse(jsonMatch[0]);
 
