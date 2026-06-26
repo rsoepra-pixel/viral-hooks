@@ -98,19 +98,19 @@ button:hover:not(:disabled) { background: #9fff33; }
 
   <div class="section">
     <h3>⚡ Powered by Claude AI</h3>
-    <p style="font-size: 12px; color: #999;">Bilingual hooks (Indonesia 🇮🇩 + English 🇬🇧). API key securely stored on server. Concurrent processing for speed.</p>
+    <p style="font-size: 12px; color: #999;">Bilingual hooks (Indonesia 🇮🇩 + English 🇬🇧). 3 concurrent batches for speed.</p>
   </div>
 
   <div class="section">
     <h3>Generate Hooks</h3>
     <input type="text" id="topic" placeholder="Topic (e.g. wellness coaching)">
     <input type="text" id="audience" placeholder="Audience (e.g. Indonesian parents)">
-    <button onclick="generate()" id="btnGen">Generate 30 Bilingual Hooks (Concurrent)</button>
+    <button onclick="generate()" id="btnGen">Generate 30 Bilingual Hooks</button>
   </div>
 
   <div class="progress-box" id="progBox">
     <div class="progress-label">
-      <span>GENERATING (PARALLEL)...</span>
+      <span>GENERATING (3 CONCURRENT)...</span>
       <span class="hourglass" id="statusIcon">⏳</span>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
@@ -128,7 +128,6 @@ button:hover:not(:disabled) { background: #9fff33; }
   </div>
 </div>
 
-<!-- Hidden table for PDF export -->
 <table id="pdfTable" style="width:100%; border-collapse:collapse;">
   <tr style="background:#f0f0f0; color:#000;">
     <th style="border:1px solid #000; padding:8px;">No</th>
@@ -239,7 +238,7 @@ function setPct(v) {
 
 async function generateBatch(topic, audience, cats, batchNum) {
   try {
-    log("Batch " + batchNum + " (parallel)...", "warn");
+    log("Batch " + batchNum + " (concurrent)...", "warn");
 
     var response = await fetch("/.netlify/functions/generate-hooks", {
       method: "POST",
@@ -297,24 +296,24 @@ async function generate() {
   document.getElementById("progBox").style.display = "block";
   document.getElementById("hooksBox").style.display = "none";
   document.getElementById("logBox").innerHTML = "";
-  setPct(50);
+  setPct(33);
 
+  // 3 batches × 10 hooks = 30 total
   var batches = [
     ["Kontarian","Pembuka Cerita","Data & Statistik"],
-    ["Ketakutan & Risiko","Aspirasi","Celah Rasa Ingin Tahu"]
+    ["Ketakutan & Risiko","Aspirasi","Celah Rasa Ingin Tahu"],
+    ["Tantangan","Bukti Sosial","Cara & Transformasi"]
   ];
 
   try {
-    log("Starting parallel generation...", "warn");
+    log("Starting 3 concurrent batches...", "warn");
     
-    // Make both requests at the SAME TIME using Promise.all
     var batchPromises = batches.map((cats, idx) => 
       generateBatch(topic, audience, cats, idx + 1)
     );
     
     var results = await Promise.all(batchPromises);
     
-    // Flatten and add numbering
     results.forEach((hookArray, idx) => {
       hookArray.forEach((h, i) => {
         h.num = allHooks.length + i + 1;
@@ -323,7 +322,7 @@ async function generate() {
     });
 
     setPct(100);
-    log("✓✓✓ " + allHooks.length + " TOTAL HOOKS GENERATED (PARALLEL)", "success");
+    log("✓✓✓ " + allHooks.length + " TOTAL HOOKS (3 CONCURRENT)", "success");
     
     var statusIcon = document.getElementById("statusIcon");
     statusIcon.textContent = "✓";
@@ -400,7 +399,7 @@ function downloadCSV() {
     var link = document.createElement("a");
     var url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", "hooks_bilingual.csv");
+    link.setAttribute("download", "hooks_bilingual_30.csv");
     link.click();
     showSuccessPopup("✓ CSV Downloaded!");
   } catch(e) {
@@ -431,7 +430,7 @@ function downloadPDF() {
     
     var options = {
       margin: 10,
-      filename: "hooks_bilingual.pdf",
+      filename: "hooks_bilingual_30.pdf",
       image: {type: "jpeg", quality: 0.98},
       html2canvas: {scale: 2},
       jsPDF: {orientation: "landscape", unit: "mm", format: "a4"}
