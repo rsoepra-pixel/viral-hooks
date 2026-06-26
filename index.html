@@ -3,50 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Viral Hooks - 90 Day Free Trial</title>
+<title>Viral Hooks - CreatorCenter.id</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  background: #0a0a0a;
-  color: #f0f0f0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  padding: 20px;
-  min-height: 100vh;
-}
+body { background: #0a0a0a; color: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; min-height: 100vh; }
 .container { max-width: 900px; margin: 0 auto; }
 header { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #222; }
 .brand { font-weight: bold; font-size: 18px; color: #7eff00; }
 .trial-badge { background: #7eff00; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; }
 .trial-info { font-size: 12px; color: #999; margin-top: 8px; }
-.section {
-  background: #111;
-  border: 1px solid #222;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-}
+.section { background: #111; border: 1px solid #222; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
 .section h3 { margin-bottom: 15px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #7eff00; }
-input, select {
-  background: #0a0a0a;
-  border: 1px solid #333;
-  color: #f0f0f0;
-  padding: 10px;
-  border-radius: 4px;
-  width: 100%;
-  margin-bottom: 10px;
-  font-size: 13px;
-}
-button {
-  background: #7eff00;
-  color: #000;
-  border: none;
-  padding: 12px 24px;
-  font-weight: bold;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  width: 100%;
-}
+input, select { background: #0a0a0a; border: 1px solid #333; color: #f0f0f0; padding: 10px; border-radius: 4px; width: 100%; margin-bottom: 10px; font-size: 13px; }
+button { background: #7eff00; color: #000; border: none; padding: 12px 24px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 13px; width: 100%; }
 button:disabled { background: #666; cursor: not-allowed; }
 button:hover:not(:disabled) { background: #9fff33; }
 .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
@@ -55,32 +24,12 @@ button:hover:not(:disabled) { background: #9fff33; }
 .modal-box h2 { color: #7eff00; margin-bottom: 20px; font-size: 28px; }
 .modal-box p { margin: 15px 0; line-height: 1.6; }
 .feature { background: #0a0a0a; padding: 12px; margin: 12px 0; border-left: 3px solid #7eff00; text-align: left; }
-.modal-popup { background: #111; border: 2px solid #7eff00; padding: 40px; border-radius: 8px; text-align: center; max-width: 500px; }
-.modal-popup .check-icon { font-size: 48px; color: #7eff00; margin-bottom: 20px; }
-.modal-popup p { font-size: 16px; color: #7eff00; font-weight: bold; margin-bottom: 20px; }
-.modal-popup button { margin-top: 20px; width: auto; }
 .progress-box { background: #0a0a0a; border: 1px solid #333; padding: 20px; border-radius: 4px; margin-bottom: 20px; display: none; }
 .progress-label { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.hourglass {
-  display: inline-block;
-  font-size: 20px;
-  animation: hourglassFlip 1.5s infinite;
-}
-@keyframes hourglassFlip {
-  0% { transform: rotateZ(0deg); }
-  50% { transform: rotateZ(180deg); }
-  100% { transform: rotateZ(180deg); }
-}
-.checkmark {
-  display: inline-block;
-  color: #7eff00;
-  font-size: 20px;
-  animation: checkmarkPop 0.6s ease-out;
-}
-@keyframes checkmarkPop {
-  0% { transform: scale(0); }
-  100% { transform: scale(1); }
-}
+.hourglass { display: inline-block; font-size: 20px; animation: hourglassFlip 1.5s infinite; }
+@keyframes hourglassFlip { 0% { transform: rotateZ(0deg); } 50% { transform: rotateZ(180deg); } 100% { transform: rotateZ(180deg); } }
+.checkmark { display: inline-block; color: #7eff00; font-size: 20px; animation: checkmarkPop 0.6s ease-out; }
+@keyframes checkmarkPop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 .progress-bar { background: #222; height: 6px; border-radius: 3px; margin: 10px 0; overflow: hidden; }
 .progress-fill { background: #7eff00; height: 100%; width: 0%; transition: width 0.3s; }
 .log-box { background: #0a0a0a; border: 1px solid #333; padding: 15px; border-radius: 4px; max-height: 300px; overflow-y: auto; font-size: 11px; font-family: monospace; margin-top: 15px; }
@@ -113,8 +62,8 @@ button:hover:not(:disabled) { background: #9fff33; }
     <h2>🎉 Selamat Datang</h2>
     <p style="font-size: 12px; color: #7eff00; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">CreatorCenter.id AI-Powered Tools</p>
     <p><strong>Uji Coba 90 Hari Gratis</strong></p>
-    <p>Hasilkan 100 hook viral dengan AI dalam hitungan menit</p>
-    <div class="feature">✓ 5 searches per hari (100 hooks per search)</div>
+    <p>Hasilkan 50 hook viral dengan AI dalam hitungan menit</p>
+    <div class="feature">✓ 5 searches per hari (50 hooks per search)</div>
     <div class="feature">✓ Dukungan Claude AI Sonnet 4.6</div>
     <div class="feature">✓ Export CSV dan PDF</div>
     <div class="feature">✓ Filter dan organisir hooks by category</div>
@@ -122,18 +71,8 @@ button:hover:not(:disabled) { background: #9fff33; }
   </div>
 </div>
 
-<div id="workingPopup" class="modal-overlay">
-  <div class="modal-popup">
-    <div style="font-size: 36px; margin-bottom: 20px;">🤖</div>
-    <p>I am working very hard right now...</p>
-    <p style="font-size: 14px; color: #999; margin-top: 10px;">wait for progress report...</p>
-    <p style="font-size: 12px; color: #7eff00; margin-top: 15px; font-weight: bold;">siap +/- 3-5 menit</p>
-    <button onclick="hideWorkingPopup()" style="margin-top: 20px; width: auto;">hide</button>
-  </div>
-</div>
-
 <div id="successPopup" class="modal-overlay">
-  <div class="modal-popup">
+  <div class="modal-box">
     <div style="font-size: 48px; margin-bottom: 20px;">✓</div>
     <p id="successMsg">SUCCESS!</p>
     <button onclick="closeSuccessPopup()" style="margin-top: 20px; width: auto;">OK</button>
@@ -161,7 +100,7 @@ button:hover:not(:disabled) { background: #9fff33; }
     <h3>Generate Hooks</h3>
     <input type="text" id="topic" placeholder="Topic (e.g. wellness coaching)">
     <input type="text" id="audience" placeholder="Audience (e.g. Indonesian parents)">
-    <button onclick="generate()" id="btnGen">Generate 100 Hooks</button>
+    <button onclick="generate()" id="btnGen">Generate 50 Hooks</button>
   </div>
 
   <div class="progress-box" id="progBox">
@@ -191,9 +130,8 @@ var hasLocalStorage = true;
 
 function checkLocalStorage() {
   try {
-    var test = "__test__";
-    localStorage.setItem(test, test);
-    localStorage.removeItem(test);
+    localStorage.setItem("__test__", "__test__");
+    localStorage.removeItem("__test__");
     return true;
   } catch(e) {
     return false;
@@ -202,10 +140,7 @@ function checkLocalStorage() {
 
 function initTrial() {
   hasLocalStorage = checkLocalStorage();
-  
   var accepted = getStorage("trial_accepted");
-  var trialStart = getStorage("trial_start");
-  
   if (!accepted) {
     document.getElementById("trialModal").classList.add("show");
   } else {
@@ -237,12 +172,10 @@ function setStorage(key, val) {
 function updateTrialInfo() {
   var trialStart = getStorage("trial_start");
   if (!trialStart) return;
-  
   var start = new Date(trialStart);
   var now = new Date();
   var end = new Date(start.getTime() + 90 * 24 * 60 * 60 * 1000);
   var daysLeft = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-  
   document.getElementById("trialDays").textContent = Math.max(0, daysLeft);
   
   var today = new Date().toISOString().split('T')[0];
@@ -264,14 +197,6 @@ function recordUsage() {
   dailyUsage[today] = (dailyUsage[today] || 0) + 1;
   setStorage("daily_usage", JSON.stringify(dailyUsage));
   updateTrialInfo();
-}
-
-function showWorkingPopup() {
-  document.getElementById("workingPopup").classList.add("show");
-}
-
-function hideWorkingPopup() {
-  document.getElementById("workingPopup").classList.remove("show");
 }
 
 function showSuccessPopup(msg) {
@@ -355,19 +280,16 @@ async function generate() {
   isGenerating = true;
   document.getElementById("btnGen").disabled = true;
 
-  showWorkingPopup();
-
   allHooks = [];
   document.getElementById("progBox").style.display = "block";
   document.getElementById("hooksBox").style.display = "none";
   document.getElementById("logBox").innerHTML = "";
   setPct(0);
 
+  // Reduced to 2 batches = 50 hooks
   var batches = [
     ["Kontarian","Pembuka Cerita","Data & Statistik"],
-    ["Ketakutan & Risiko","Aspirasi","Celah Rasa Ingin Tahu"],
-    ["Tantangan","Bukti Sosial","Cara & Transformasi"],
-    ["Pengakuan & Kerentanan"]
+    ["Ketakutan & Risiko","Aspirasi","Celah Rasa Ingin Tahu"]
   ];
 
   try {
@@ -376,18 +298,17 @@ async function generate() {
     }
 
     setPct(100);
-    log("✓✓✓ 100 HOOKS GENERATED", "success");
+    log("✓✓✓ 50 HOOKS GENERATED", "success");
     
     var statusIcon = document.getElementById("statusIcon");
     statusIcon.textContent = "✓";
     statusIcon.className = "checkmark";
     
     recordUsage();
-    hideWorkingPopup();
     renderHooks();
 
   } catch (e) {
-    hideWorkingPopup();
+    // error handled in generateBatch
   }
 
   isGenerating = false;
@@ -446,7 +367,7 @@ function downloadCSV() {
     });
     var a = document.createElement("a");
     a.href = "data:text/csv;base64," + btoa(csv);
-    a.download = "hooks_100.csv";
+    a.download = "hooks_50.csv";
     a.click();
     showSuccessPopup("✓ CSV Downloaded!");
   } catch(e) {
@@ -464,7 +385,7 @@ function downloadPDF() {
     html += "</table>";
     var a = document.createElement("a");
     a.href = "data:text/html;base64," + btoa(html);
-    a.download = "hooks_100.html";
+    a.download = "hooks_50.html";
     a.click();
     showSuccessPopup("✓ PDF Downloaded!");
   } catch(e) {
