@@ -1,22 +1,18 @@
 exports.handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: JSON.stringify({error: "POST only"}) };
-  }
-
   try {
-    const { topic, audience, categories } = JSON.parse(event.body);
     const apiKey = process.env.CLAUDE_API_KEY;
+    if (!apiKey) return { statusCode: 500, body: JSON.stringify({error: "No API key"}) };
 
-    if (!apiKey) throw new Error("API key not set");
-    if (!topic || !categories) throw new Error("Missing topic or categories");
+    const body = JSON.parse(event.body);
+    const { topic, audience, categories } = body;
+    if (!topic || !categories) return { statusCode: 400, body: JSON.stringify({error: "Missing fields"}) };
 
-    const count = categories.length * 10;
-    const prompt = `Generate ${count} viral hooks: ${topic}
+    const prompt = `Generate ${categories.length * 10} viral hooks: ${topic}
 Audience: ${audience || "general"}
 Categories: ${categories.join(", ")}
-Return ONLY valid JSON array []. Each: {cat, text, platform, emotion, why}`;
+Return ONLY this format: [{"cat":"X","text":"Y","platform":"Z","emotion":"A","why":"B"},...]`;
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -25,34 +21,29 @@ Return ONLY valid JSON array []. Each: {cat, text, platform, emotion, why}`;
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 5000,
-        messages: [{ role: "user", content: prompt }]
+        messages: [{role: "user", content: prompt}]
       })
     });
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error?.message || "API error");
+    if (!response.ok) {
+      const err = await response.json();
+      return { statusCode: response.status, body: JSON.stringify({error: err.error?.message || "API Error"}) };
     }
 
-    const data = await res.json();
-    const text = data.content?.[0]?.text || "";
+    const data = await response.json();
+    const text = data.content[0].text;
     
-    const start = text.indexOf("[");
-    const end = text.lastIndexOf("]");
-    if (start < 0 || end < 0) throw new Error("No JSON in response");
-
-    const hooks = JSON.parse(text.substring(start, end + 1));
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return { statusCode: 500, body: JSON.stringify({error: "No JSON array found"}) };
+    
+    const hooks = JSON.parse(jsonMatch[0]);
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ success: true, hooks, count: hooks.length })
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({success: true, hooks: hooks, count: hooks.length})
     };
-  } catch (err) {
-    return {
-      statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: err.message })
-    };
+  } catch (e) {
+    return { statusCode: 500, body: JSON.stringify({error: e.message}) };
   }
 };
