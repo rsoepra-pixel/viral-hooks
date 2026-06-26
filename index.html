@@ -48,7 +48,6 @@ button:hover:not(:disabled) { background: #9fff33; }
 .hook-card:hover { border-color: #7eff00; background: #111; }
 .hook-cat { color: #7eff00; font-size: 10px; text-transform: uppercase; margin-bottom: 6px; }
 .hook-text { margin: 6px 0; padding: 8px; background: #0a0a0a; border-left: 2px solid #7eff00; }
-.hook-lang-label { font-size: 9px; color: #999; text-transform: uppercase; margin-top: 4px; }
 .hook-info { color: #999; font-size: 10px; margin-top: 6px; }
 .filter-bar { display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; }
 .filter-btn { background: #222; border: 1px solid #333; color: #f0f0f0; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; }
@@ -65,12 +64,12 @@ button:hover:not(:disabled) { background: #9fff33; }
     <h2>🎉 Selamat Datang</h2>
     <p style="font-size: 12px; color: #7eff00; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">CreatorCenter.id AI-Powered Tools</p>
     <p><strong>Uji Coba 90 Hari Gratis</strong></p>
-    <p>Hasilkan 50 hook viral BILINGUAL (Indonesia 🇮🇩 & English 🇬🇧)</p>
+    <p>Hasilkan 40 hook viral BILINGUAL (Indonesia 🇮🇩 & English 🇬🇧)</p>
     <div class="feature">✓ Setiap hook dalam 2 bahasa</div>
     <div class="feature">✓ 5 searches per hari</div>
     <div class="feature">✓ Dukungan Claude AI Sonnet 4.6</div>
     <div class="feature">✓ Export CSV dan PDF</div>
-    <div class="feature">✓ Filter by category</div>
+    <div class="feature">✓ 4 concurrent batches untuk kecepatan</div>
     <button onclick="acceptTrial()">Setuju & Mulai Uji Coba 90 Hari</button>
   </div>
 </div>
@@ -97,19 +96,19 @@ button:hover:not(:disabled) { background: #9fff33; }
 
   <div class="section">
     <h3>⚡ Powered by Claude AI</h3>
-    <p style="font-size: 12px; color: #999;">Bilingual hooks (5 concurrent batches). Setiap hook dalam 2 bahasa!</p>
+    <p style="font-size: 12px; color: #999;">Bilingual hooks (4 concurrent batches). Setiap hook dalam 2 bahasa!</p>
   </div>
 
   <div class="section">
     <h3>Generate Hooks</h3>
     <input type="text" id="topic" placeholder="Topic (e.g. wellness coaching)">
     <input type="text" id="audience" placeholder="Audience (e.g. Indonesian parents)">
-    <button onclick="generate()" id="btnGen">Generate 50 Bilingual Hooks</button>
+    <button onclick="generate()" id="btnGen">Generate 40 Bilingual Hooks</button>
   </div>
 
   <div class="progress-box" id="progBox">
     <div class="progress-label">
-      <span>GENERATING (5 CONCURRENT)...</span>
+      <span>GENERATING (4 CONCURRENT)...</span>
       <span class="hourglass" id="statusIcon">⏳</span>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
@@ -295,19 +294,18 @@ async function generate() {
   document.getElementById("progBox").style.display = "block";
   document.getElementById("hooksBox").style.display = "none";
   document.getElementById("logBox").innerHTML = "";
-  setPct(20);
+  setPct(25);
 
-  // 5 batches × 10 hooks = 50 total
+  // 4 batches × 10 hooks = 40 total (STABLE)
   var batches = [
     ["Kontarian","Pembuka Cerita","Data & Statistik"],
     ["Ketakutan & Risiko","Aspirasi","Celah Rasa Ingin Tahu"],
     ["Tantangan","Bukti Sosial","Cara & Transformasi"],
-    ["Pengakuan & Kerentanan","Perbandingan","Percakapan"],
-    ["Humor","Nostalgia","Tren & Viral"]
+    ["Pengakuan & Kerentanan","Perbandingan","Percakapan"]
   ];
 
   try {
-    log("Starting 5 concurrent batches...", "warn");
+    log("Starting 4 concurrent batches...", "warn");
     
     var batchPromises = batches.map((cats, idx) => 
       generateBatch(topic, audience, cats, idx + 1)
@@ -323,7 +321,7 @@ async function generate() {
     });
 
     setPct(100);
-    log("✓✓✓ " + allHooks.length + " TOTAL HOOKS (5 CONCURRENT, BILINGUAL)", "success");
+    log("✓✓✓ " + allHooks.length + " TOTAL HOOKS (4 CONCURRENT, BILINGUAL)", "success");
     
     var statusIcon = document.getElementById("statusIcon");
     statusIcon.textContent = "✓";
@@ -402,7 +400,7 @@ function downloadCSV() {
     var link = document.createElement("a");
     var url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", "hooks_bilingual_50.csv");
+    link.setAttribute("download", "hooks_bilingual_40.csv");
     link.click();
     showSuccessPopup("✓ CSV Downloaded!");
   } catch(e) {
@@ -432,7 +430,7 @@ function downloadPDF() {
     
     var options = {
       margin: 10,
-      filename: "hooks_bilingual_50.pdf",
+      filename: "hooks_bilingual_40.pdf",
       image: {type: "jpeg", quality: 0.98},
       html2canvas: {scale: 2},
       jsPDF: {orientation: "landscape", unit: "mm", format: "a4"}
