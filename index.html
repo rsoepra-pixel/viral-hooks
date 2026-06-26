@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Viral Hooks - 90 Day Free Trial</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0a0a0a;
+  color: #f0f0f0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding: 20px;
+  min-height: 100vh;
+}
+.container { max-width: 900px; margin: 0 auto; }
+header { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #222; }
+.brand { font-weight: bold; font-size: 18px; color: #7eff00; }
+.trial-badge { background: #7eff00; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+.trial-info { font-size: 12px; color: #999; margin-top: 8px; }
+.section {
+  background: #111;
+  border: 1px solid #222;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+.section h3 { margin-bottom: 15px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #7eff00; }
+input, select {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  color: #f0f0f0;
+  padding: 10px;
+  border-radius: 4px;
+  width: 100%;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+button {
+  background: #7eff00;
+  color: #000;
+  border: none;
+  padding: 12px 24px;
+  font-weight: bold;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  width: 100%;
+}
+button:disabled { background: #666; cursor: not-allowed; }
+button:hover:not(:disabled) { background: #9fff33; }
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal-box { background: #111; border: 2px solid #7eff00; padding: 40px; border-radius: 8px; text-align: center; max-width: 600px; }
+.modal-box h2 { color: #7eff00; margin-bottom: 20px; font-size: 28px; }
+.modal-box p { margin: 15px 0; line-height: 1.6; }
+.feature { background: #0a0a0a; padding: 12px; margin: 12px 0; border-left: 3px solid #7eff00; text-align: left; }
+.modal-popup { background: #111; border: 2px solid #7eff00; padding: 40px; border-radius: 8px; text-align: center; max-width: 500px; }
+.modal-popup .check-icon { font-size: 48px; color: #7eff00; margin-bottom: 20px; }
+.modal-popup p { font-size: 16px; color: #7eff00; font-weight: bold; margin-bottom: 20px; }
+.modal-popup button { margin-top: 20px; width: auto; }
+.progress-box { background: #0a0a0a; border: 1px solid #333; padding: 20px; border-radius: 4px; margin-bottom: 20px; display: none; }
+.progress-label { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.hourglass {
+  display: inline-block;
+  font-size: 20px;
+  animation: hourglassFlip 1.5s infinite;
+}
+@keyframes hourglassFlip {
+  0% { transform: rotateZ(0deg); }
+  50% { transform: rotateZ(180deg); }
+  100% { transform: rotateZ(180deg); }
+}
+.checkmark {
+  display: inline-block;
+  color: #7eff00;
+  font-size: 20px;
+  animation: checkmarkPop 0.6s ease-out;
+}
+@keyframes checkmarkPop {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+.progress-bar { background: #222; height: 6px; border-radius: 3px; margin: 10px 0; overflow: hidden; }
+.progress-fill { background: #7eff00; height: 100%; width: 0%; transition: width 0.3s; }
+.log-box { background: #0a0a0a; border: 1px solid #333; padding: 15px; border-radius: 4px; max-height: 300px; overflow-y: auto; font-size: 11px; font-family: monospace; margin-top: 15px; }
+.log-line { margin: 4px 0; }
+.log-success { color: #7eff00; }
+.log-error { color: #ff7a4a; }
+.log-warn { color: #f59e0b; }
+.hooks-section { display: none; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+.stat { background: #0a0a0a; border: 1px solid #333; padding: 15px; border-radius: 4px; text-align: center; }
+.stat-n { font-size: 24px; font-weight: bold; color: #7eff00; }
+.stat-l { font-size: 11px; color: #999; margin-top: 5px; text-transform: uppercase; }
+.hooks-grid { display: grid; gap: 10px; margin-top: 20px; }
+.hook-card { background: #0a0a0a; border: 1px solid #333; padding: 12px; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 12px; }
+.hook-card:hover { border-color: #7eff00; background: #111; }
+.hook-cat { color: #7eff00; font-size: 10px; text-transform: uppercase; }
+.hook-text { margin: 6px 0; }
+.hook-info { color: #999; font-size: 10px; margin-top: 6px; }
+.filter-bar { display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; }
+.filter-btn { background: #222; border: 1px solid #333; color: #f0f0f0; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; }
+.filter-btn.active { background: #7eff00; color: #000; }
+.export-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+.export-buttons button { font-size: 12px; padding: 10px; }
+</style>
+</head>
+<body>
+
+<div id="trialModal" class="modal-overlay">
+  <div class="modal-box">
+    <h2>🎉 Selamat Datang</h2>
+    <p style="font-size: 12px; color: #7eff00; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">CreatorCenter.id AI-Powered Tools</p>
+    <p><strong>Uji Coba 90 Hari Gratis</strong></p>
+    <p>Hasilkan 100 hook viral dengan AI dalam hitungan menit</p>
+    <div class="feature">✓ 5 searches per hari (100 hooks per search)</div>
+    <div class="feature">✓ Dukungan Claude AI Sonnet 4.6</div>
+    <div class="feature">✓ Export CSV dan PDF</div>
+    <div class="feature">✓ Filter dan organisir hooks by category</div>
+    <button onclick="acceptTrial()">Setuju & Mulai Uji Coba 90 Hari</button>
+  </div>
+</div>
+
+<div id="workingPopup" class="modal-overlay">
+  <div class="modal-popup">
+    <div style="font-size: 36px; margin-bottom: 20px;">🤖</div>
+    <p>I am working very hard right now...</p>
+    <p style="font-size: 14px; color: #999; margin-top: 10px;">wait for progress report...</p>
+    <p style="font-size: 12px; color: #7eff00; margin-top: 15px; font-weight: bold;">siap +/- 3-5 menit</p>
+    <button onclick="hideWorkingPopup()" style="margin-top: 20px; width: auto;">hide</button>
+  </div>
+</div>
+
+<div id="successPopup" class="modal-overlay">
+  <div class="modal-popup">
+    <div style="font-size: 48px; margin-bottom: 20px;">✓</div>
+    <p id="successMsg">SUCCESS!</p>
+    <button onclick="closeSuccessPopup()" style="margin-top: 20px; width: auto;">OK</button>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <div>
+      <div class="brand">@CREATORCENTER.ID</div>
+      <div class="trial-badge">UJI COBA 90 HARI</div>
+      <div class="trial-info">
+        <span id="trialDays">90</span> hari tersisa | 
+        <span id="dailyUsage">5</span>/5 searches hari ini
+      </div>
+    </div>
+  </header>
+
+  <div class="section">
+    <h3>⚡ Powered by Claude AI</h3>
+    <p style="font-size: 12px; color: #999;">API key securely stored on server. Your data is safe.</p>
+  </div>
+
+  <div class="section">
+    <h3>Generate Hooks</h3>
+    <input type="text" id="topic" placeholder="Topic (e.g. wellness coaching)">
+    <input type="text" id="audience" placeholder="Audience (e.g. Indonesian parents)">
+    <button onclick="generate()" id="btnGen">Generate 100 Hooks</button>
+  </div>
+
+  <div class="progress-box" id="progBox">
+    <div class="progress-label">
+      <span>GENERATING...</span>
+      <span class="hourglass" id="statusIcon">⏳</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+    <div class="log-box" id="logBox"></div>
+  </div>
+
+  <div class="hooks-section" id="hooksBox">
+    <div class="stats" id="statsBox"></div>
+    <div class="filter-bar" id="filterBar"></div>
+    <div class="hooks-grid" id="hooksGrid"></div>
+    <div class="export-buttons">
+      <button onclick="downloadCSV()">📥 Download CSV</button>
+      <button onclick="downloadPDF()">📄 Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var allHooks = [];
+var isGenerating = false;
+var hasLocalStorage = true;
+
+function checkLocalStorage() {
+  try {
+    var test = "__test__";
+    localStorage.setItem(test, test);
+    localStorage.removeItem(test);
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+function initTrial() {
+  hasLocalStorage = checkLocalStorage();
+  
+  var accepted = getStorage("trial_accepted");
+  var trialStart = getStorage("trial_start");
+  
+  if (!accepted) {
+    document.getElementById("trialModal").classList.add("show");
+  } else {
+    updateTrialInfo();
+  }
+}
+
+function acceptTrial() {
+  setStorage("trial_accepted", "true");
+  setStorage("trial_start", new Date().toISOString());
+  setStorage("daily_usage", JSON.stringify({}));
+  document.getElementById("trialModal").classList.remove("show");
+  updateTrialInfo();
+}
+
+function getStorage(key) {
+  if (!hasLocalStorage) return sessionStorage.getItem(key);
+  return localStorage.getItem(key);
+}
+
+function setStorage(key, val) {
+  if (hasLocalStorage) {
+    localStorage.setItem(key, val);
+  } else {
+    sessionStorage.setItem(key, val);
+  }
+}
+
+function updateTrialInfo() {
+  var trialStart = getStorage("trial_start");
+  if (!trialStart) return;
+  
+  var start = new Date(trialStart);
+  var now = new Date();
+  var end = new Date(start.getTime() + 90 * 24 * 60 * 60 * 1000);
+  var daysLeft = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+  
+  document.getElementById("trialDays").textContent = Math.max(0, daysLeft);
+  
+  var today = new Date().toISOString().split('T')[0];
+  var dailyUsage = JSON.parse(getStorage("daily_usage") || "{}");
+  var todayUsage = dailyUsage[today] || 0;
+  document.getElementById("dailyUsage").textContent = Math.max(0, 5 - todayUsage);
+}
+
+function canUseToday() {
+  var today = new Date().toISOString().split('T')[0];
+  var dailyUsage = JSON.parse(getStorage("daily_usage") || "{}");
+  var todayUsage = dailyUsage[today] || 0;
+  return todayUsage < 5;
+}
+
+function recordUsage() {
+  var today = new Date().toISOString().split('T')[0];
+  var dailyUsage = JSON.parse(getStorage("daily_usage") || "{}");
+  dailyUsage[today] = (dailyUsage[today] || 0) + 1;
+  setStorage("daily_usage", JSON.stringify(dailyUsage));
+  updateTrialInfo();
+}
+
+function showWorkingPopup() {
+  document.getElementById("workingPopup").classList.add("show");
+}
+
+function hideWorkingPopup() {
+  document.getElementById("workingPopup").classList.remove("show");
+}
+
+function showSuccessPopup(msg) {
+  document.getElementById("successMsg").textContent = msg;
+  document.getElementById("successPopup").classList.add("show");
+}
+
+function closeSuccessPopup() {
+  document.getElementById("successPopup").classList.remove("show");
+}
+
+function log(m, t = "success") {
+  var el = document.createElement("div");
+  el.className = "log-line log-" + t;
+  el.textContent = m;
+  document.getElementById("logBox").appendChild(el);
+  document.getElementById("logBox").scrollTop = 999999;
+}
+
+function setPct(v) {
+  document.getElementById("progFill").style.width = Math.min(100, v) + "%";
+}
+
+async function generateBatch(topic, audience, cats, batchNum, totalBatches) {
+  try {
+    setPct((batchNum / totalBatches) * 100);
+    log("Batch " + batchNum + "/" + totalBatches + "...", "warn");
+
+    var response = await fetch("/.netlify/functions/generate-hooks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        topic: topic,
+        audience: audience,
+        categories: cats
+      })
+    });
+
+    if (!response.ok) {
+      var errData = await response.json();
+      throw new Error(errData.error || "HTTP " + response.status);
+    }
+
+    var data = await response.json();
+    if (!data.success) {
+      throw new Error(data.error || "Unknown error");
+    }
+
+    var hooks = data.hooks || [];
+    hooks.forEach((h, i) => { h.num = allHooks.length + i + 1; });
+    allHooks = allHooks.concat(hooks);
+    
+    log("✓ " + hooks.length + " hooks (total: " + allHooks.length + ")", "success");
+    return true;
+
+  } catch (e) {
+    log("ERROR: " + e.message, "error");
+    throw e;
+  }
+}
+
+async function generate() {
+  var topic = document.getElementById("topic").value.trim();
+  var audience = document.getElementById("audience").value.trim();
+  
+  if (!topic) {
+    alert("Please enter a topic");
+    return;
+  }
+  
+  if (!canUseToday()) {
+    alert("❌ Daily limit reached (5 searches/day). Try tomorrow!");
+    return;
+  }
+
+  if (isGenerating) {
+    alert("Generation in progress... please wait");
+    return;
+  }
+
+  isGenerating = true;
+  document.getElementById("btnGen").disabled = true;
+
+  showWorkingPopup();
+
+  allHooks = [];
+  document.getElementById("progBox").style.display = "block";
+  document.getElementById("hooksBox").style.display = "none";
+  document.getElementById("logBox").innerHTML = "";
+  setPct(0);
+
+  var batches = [
+    ["Kontarian","Pembuka Cerita","Data & Statistik"],
+    ["Ketakutan & Risiko","Aspirasi","Celah Rasa Ingin Tahu"],
+    ["Tantangan","Bukti Sosial","Cara & Transformasi"],
+    ["Pengakuan & Kerentanan"]
+  ];
+
+  try {
+    for (var i = 0; i < batches.length; i++) {
+      await generateBatch(topic, audience, batches[i], i + 1, batches.length);
+    }
+
+    setPct(100);
+    log("✓✓✓ 100 HOOKS GENERATED", "success");
+    
+    var statusIcon = document.getElementById("statusIcon");
+    statusIcon.textContent = "✓";
+    statusIcon.className = "checkmark";
+    
+    recordUsage();
+    hideWorkingPopup();
+    renderHooks();
+
+  } catch (e) {
+    hideWorkingPopup();
+  }
+
+  isGenerating = false;
+  document.getElementById("btnGen").disabled = false;
+}
+
+function renderHooks() {
+  var cats = [];
+  allHooks.forEach(h => {
+    if (!cats.includes(h.cat)) cats.push(h.cat);
+  });
+
+  document.getElementById("statsBox").innerHTML =
+    "<div class='stat'><div class='stat-n'>" + allHooks.length + "</div><div class='stat-l'>Hooks</div></div>" +
+    "<div class='stat'><div class='stat-n'>" + cats.length + "</div><div class='stat-l'>Categories</div></div>" +
+    "<div class='stat'><div class='stat-n'>AI</div><div class='stat-l'>Claude</div></div>";
+
+  var fb = document.getElementById("filterBar");
+  fb.innerHTML = "";
+  ["Semua"].concat(cats).forEach(c => {
+    var b = document.createElement("button");
+    b.className = "filter-btn" + (c==="Semua" ? " active" : "");
+    b.textContent = c;
+    b.onclick = () => filterBy(c);
+    fb.appendChild(b);
+  });
+
+  filterBy("Semua");
+  document.getElementById("hooksBox").style.display = "block";
+}
+
+function filterBy(cat) {
+  document.querySelectorAll(".filter-btn").forEach(b => {
+    b.classList.toggle("active", b.textContent === cat);
+  });
+
+  var grid = document.getElementById("hooksGrid");
+  grid.innerHTML = "";
+  allHooks.forEach(h => {
+    if (cat !== "Semua" && h.cat !== cat) return;
+    var c = document.createElement("div");
+    c.className = "hook-card";
+    c.onclick = () => { navigator.clipboard.writeText(h.text); alert("✓ Copied!"); };
+    c.innerHTML = "<div class='hook-cat'>" + h.cat + "</div>" +
+      "<div class='hook-text'>" + h.text + "</div>" +
+      "<div class='hook-info'>" + h.platform + " · " + h.emotion + "</div>";
+    grid.appendChild(c);
+  });
+}
+
+function downloadCSV() {
+  try {
+    var csv = "No,Category,Hook,Platform,Emotion\n";
+    allHooks.forEach(h => {
+      csv += h.num + ',"' + h.cat.replace(/"/g, '""') + '","' + h.text.replace(/"/g, '""') + '",' + h.platform + ',' + h.emotion + '\n';
+    });
+    var a = document.createElement("a");
+    a.href = "data:text/csv;base64," + btoa(csv);
+    a.download = "hooks_100.csv";
+    a.click();
+    showSuccessPopup("✓ CSV Downloaded!");
+  } catch(e) {
+    alert("❌ Download failed: " + e.message);
+  }
+}
+
+function downloadPDF() {
+  try {
+    var html = "<table border='1' cellpadding='8' style='width:100%; border-collapse:collapse;'>" +
+      "<tr><th>No</th><th>Category</th><th>Hook</th><th>Platform</th><th>Emotion</th></tr>";
+    allHooks.forEach(h => {
+      html += "<tr><td>" + h.num + "</td><td>" + h.cat + "</td><td>" + h.text + "</td><td>" + h.platform + "</td><td>" + h.emotion + "</td></tr>";
+    });
+    html += "</table>";
+    var a = document.createElement("a");
+    a.href = "data:text/html;base64," + btoa(html);
+    a.download = "hooks_100.html";
+    a.click();
+    showSuccessPopup("✓ PDF Downloaded!");
+  } catch(e) {
+    alert("❌ Download failed: " + e.message);
+  }
+}
+
+window.onload = function() {
+  initTrial();
+};
+</script>
+
+</body>
+</html>
