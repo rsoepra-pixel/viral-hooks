@@ -8,12 +8,12 @@
 
 import { getStore } from "@netlify/blobs";
 
-const DAILY_LIMIT   = 5;
+const TOTAL_LIMIT   = 10;                        // total free runs per user within the window
 const WINDOW_DAYS   = 90;
 const RUN_TTL_MS    = 60 * 60 * 1000;            // a run token stays valid 1 hour
-const GLOBAL_DAILY_RUNS = Number(process.env.GLOBAL_DAILY_RUNS || 500); // #1 spend cap (all users/day)
+const GLOBAL_DAILY_RUNS = Number(process.env.GLOBAL_DAILY_RUNS || 500); // spend cap (all users/day)
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-const TZ            = "Asia/Jakarta";            // day boundary for "5 per day"
+const TZ            = "Asia/Jakarta";            // day boundary for the global cap
 // Accept either env var name so it works whether you named it ANTHROPIC_API_KEY or CLAUDE_API_KEY
 const API_KEY = process.env.MY_ANTHROPIC_KEY || process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
 
@@ -97,32 +97,32 @@ export default async (req) => {
   if (!first) { first = { t: now }; await store.setJSON(firstKey, first); }
   const ageDays = (now - first.t) / 86400000;
   if (ageDays > WINDOW_DAYS) {
-    return json({ error: "Your 90-day access window has ended." }, 429);
+    return json({ error: "Masa akses 90 hari sudah berakhir.", locked: true, reason: "expired" }, 429);
   }
 
   // ===================== ACTION: start =====================
   if (body.action === "start") {
-    const day = jakartaDay();
+    // Total free-use cap: 10 runs per user within the 90-day window.
+    const totalKey = "total:" + key;
+    const used = (await store.get(totalKey, { type: "json" }))?.n || 0;
+    if (used >= TOTAL_LIMIT) {
+      return json({ error: "Kuota gratis 10x sudah habis.", locked: true, reason: "limit" }, 429);
+    }
 
-    // #1 Global spend ceiling: stop the whole site once the daily run budget is hit.
-    const gKey = "global:" + day;
+    // Global spend ceiling: stop the whole site once the daily run budget is hit.
+    const gKey = "global:" + jakartaDay();
     const gUsed = (await store.get(gKey, { type: "json" }))?.n || 0;
     if (gUsed >= GLOBAL_DAILY_RUNS) {
-      return json({ error: "The tool is at capacity for today. Please try again tomorrow." }, 429);
+      return json({ error: "Layanan sedang penuh hari ini. Coba lagi besok.", locked: false }, 429);
     }
 
-    const dayKey = "runs:" + key + ":" + day;
-    const used = (await store.get(dayKey, { type: "json" }))?.n || 0;
-    if (used >= DAILY_LIMIT) {
-      return json({ error: `Daily limit reached (${DAILY_LIMIT}/day). Try again tomorrow.` }, 429);
-    }
-    await store.setJSON(dayKey, { n: used + 1 });
+    await store.setJSON(totalKey, { n: used + 1 });
     await store.setJSON(gKey, { n: gUsed + 1 });
 
     const runToken = (globalThis.crypto?.randomUUID?.() || (now + "-" + Math.random()));
     await store.setJSON("run:" + key + ":" + runToken, { t: now });   // authorize this run
 
-    return json({ runToken, runsLeft: DAILY_LIMIT - (used + 1) });
+    return json({ runToken, runsLeft: TOTAL_LIMIT - (used + 1) });
   }
 
   // ===================== ACTION: batch =====================
