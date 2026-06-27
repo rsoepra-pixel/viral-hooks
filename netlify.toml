@@ -1,7 +1,10 @@
+# netlify.toml — CreatorCenter.id AI ViralHook
 [build]
-command = "echo 'static site'"
-publish = "."
+  publish = "."
+  functions = "netlify/functions"
 
-[functions]
-directory = "netlify/functions"
-node_bundler = "esbuild"
+# Optional: pretty path /api/generate-hooks -> the function
+[[redirects]]
+  from = "/api/generate-hooks"
+  to   = "/.netlify/functions/generate-hooks"
+  status = 200
