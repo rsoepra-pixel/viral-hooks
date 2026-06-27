@@ -41,7 +41,7 @@ function jakartaDay() {
 
 async function callAnthropic(payload) {
   // Retry on 429 (rate limit) and 529 (overloaded) with backoff.
-  let last;
+  let lastStatus = 0, lastBody = "";
   for (let attempt = 1; attempt <= 3; attempt++) {
     const r = await fetch(ANTHROPIC_URL, {
       method: "POST",
@@ -53,11 +53,15 @@ async function callAnthropic(payload) {
       body: JSON.stringify(payload)
     });
     if (r.ok) return await r.json();
-    last = r.status;
+    lastStatus = r.status;
+    lastBody = (await r.text().catch(() => "")).slice(0, 300);
     if (r.status === 429 || r.status === 529) { await new Promise(s => setTimeout(s, 600 * attempt)); continue; }
     break; // other errors: don't retry
   }
-  throw new Error("anthropic_" + last);
+  const err = new Error("anthropic_" + lastStatus);
+  err.anthropicStatus = lastStatus;
+  err.anthropicBody = lastBody;
+  throw err;
 }
 
 export default async (req) => {
@@ -123,7 +127,10 @@ export default async (req) => {
       });
       return json(data);   // forward Anthropic's response (frontend reads .content)
     } catch (e) {
-      return json({ error: "Generation service unavailable. Retry this set." }, 502);
+      const detail = e.anthropicStatus
+        ? ("Anthropic " + e.anthropicStatus + ": " + (e.anthropicBody || "")).slice(0, 300)
+        : String(e.message || e);
+      return json({ error: "Generation service unavailable. Retry this set.", detail }, 502);
     }
   }
 
