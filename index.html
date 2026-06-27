@@ -203,9 +203,69 @@
     .meter.busy .fill::after{animation:none}
     .cta:hover{transform:none}
   }
+
+  /* ---------------- MODALS (welcome + upsell) ---------------- */
+  .modal-overlay{
+    position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:22px;
+    background:rgba(7,8,12,.78);backdrop-filter:blur(6px);
+  }
+  .modal-card{
+    width:100%;max-width:460px;text-align:center;
+    background:
+      radial-gradient(700px 280px at 80% -20%, rgba(122,92,255,.28), transparent 60%),
+      radial-gradient(600px 300px at 0% 120%, rgba(255,45,117,.22), transparent 55%),
+      var(--ink-2);
+    border:1px solid var(--line-dark);border-radius:18px;padding:34px 26px;color:#fff;
+    box-shadow:0 30px 80px rgba(0,0,0,.5);
+  }
+  .modal-eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted-dark);margin-bottom:14px}
+  .modal-title{
+    margin:0 0 14px;font-weight:800;letter-spacing:-.02em;line-height:1.05;font-size:clamp(26px,7vw,38px);
+  }
+  .modal-title .vh{
+    background:linear-gradient(92deg,var(--spark-a),var(--spark-b));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .modal-sub{color:#e7e8ee;font-size:16px;margin:0 0 6px}
+  .modal-sub b{color:#fff}
+  .modal-note{color:var(--muted-dark);font-size:13px;margin:10px 0 0}
+  .modal-price{font-size:22px;font-weight:800;margin:16px 0 4px}
+  .modal-price b{
+    background:linear-gradient(92deg,var(--spark-a),var(--spark-b));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .modal-btn{display:inline-block;margin-top:22px;width:100%;text-decoration:none;text-align:center}
+  .modal-close{margin-top:14px;background:none;border:none;color:var(--muted-dark);font-size:13px;cursor:pointer}
+  .modal-close:hover{color:#fff}
 </style>
 </head>
 <body>
+
+<!-- ============== WELCOME POP-UP ============== -->
+<div class="modal-overlay" id="welcomeModal">
+  <div class="modal-card">
+    <div class="modal-eyebrow">Selamat datang</div>
+    <h2 class="modal-title">CreatorCenter<br><span class="vh">AI Viral Hook</span></h2>
+    <p class="modal-sub">Gratis dipakai sebanyak <b>10x</b> dalam <b>90 hari</b>.</p>
+    <p class="modal-note">Tiap pemakaian menghasilkan 25 hook dwibahasa (ID + EN).</p>
+    <button class="cta modal-btn" id="startBtn">MULAI</button>
+  </div>
+</div>
+
+<!-- ============== UPSELL POP-UP (saat kuota/masa habis) ============== -->
+<div class="modal-overlay" id="upsellModal" style="display:none">
+  <div class="modal-card">
+    <div class="modal-eyebrow">Masa coba selesai</div>
+    <h2 class="modal-title">CreatorCenter<br><span class="vh">AI Viral Hook</span></h2>
+    <p class="modal-sub" id="upsellMsg">Kuota gratis 10x dalam 90 hari sudah habis.</p>
+    <p class="modal-price">Versi penuh: <b>Rp249.000</b></p>
+    <p class="modal-note">Lanjutkan tanpa batas — hubungi kami untuk upgrade.</p>
+    <a class="cta modal-btn" id="buyBtn"
+       href="mailto:ai@creatorcenter.id?subject=Beli%20CreatorCenter%20AI%20Viral%20Hook%20-%20Rp249.000">
+       Hubungi ai@creatorcenter.id</a>
+    <button class="modal-close" id="upsellClose">Tutup &amp; lihat hasil sebelumnya</button>
+  </div>
+</div>
 
 <!-- ============== WELCOME / HERO ============== -->
 <header class="hero">
@@ -242,7 +302,7 @@
       </div>
 
       <button class="cta" id="generateBtn">Buat 25 hook</button>
-      <div class="quota" id="quota">Sesi demo: <b id="left">5</b> dari 5 percobaan tersisa hari ini · akses 90 hari</div>
+      <div class="quota" id="quota">Gratis <b id="left">10</b>x tersisa · dalam 90 hari</div>
 
       <div class="disclosure">
         Hook dibuat dari pola copywriting yang terdokumentasi dan dijelaskan berdasarkan prinsip.
@@ -337,7 +397,7 @@ let CATEGORIES = [];                       // resolved from SELECTED at generate
    is an in-memory counter that resets on reload — it only DEMONSTRATES
    the UX. Real, persistent enforcement (5/day, 90-day window) lives
    in the Netlify function via Netlify Blobs. ------------------------- */
-let runsLeft = 5;
+let runsLeft = 10;
 let RUN_TOKEN = null;
 
 /* ---------------- element refs ---------------- */
@@ -485,18 +545,31 @@ const sleep = ms => new Promise(r=>setTimeout(r,ms));
    In demo mode there is no backend, so we use the in-memory counter. */
 async function startRun(){
   if(!USE_BACKEND_FUNCTION){
-    if(runsLeft<=0){ alert("Batas demo harian tercapai (di sini reset saat halaman dimuat ulang; batas asli ditegakkan di server)."); return false; }
+    if(runsLeft<=0){ showUpsell("limit"); return false; }
     return true;
   }
   try{
     const r=await fetch(FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({action:"start", email:($("email").value||"").trim()})});
-    if(r.status===429){ const j=await r.json().catch(()=>({})); alert(j.error||"Batas harian tercapai."); return false; }
+    if(r.status===429){
+      const j=await r.json().catch(()=>({}));
+      if(j.locked){ showUpsell(j.reason); }       // kuota 10x habis / masa 90 hari berakhir
+      else { alert(j.error||"Layanan sedang penuh. Coba lagi nanti."); }
+      return false;
+    }
     if(!r.ok){ alert("Tidak bisa memulai (server "+r.status+")."); return false; }
     const j=await r.json(); RUN_TOKEN=j.runToken;
     if(j.runsLeft!=null){ $("left").textContent=j.runsLeft; }
     return true;
   }catch(e){ alert("Gangguan jaringan saat memulai. Coba lagi."); return false; }
+}
+
+/* welcome + upsell pop-ups */
+function showUpsell(reason){
+  $("upsellMsg").textContent = (reason==="expired")
+    ? "Masa akses 90 hari sudah berakhir."
+    : "Kuota gratis 10x dalam 90 hari sudah habis.";
+  $("upsellModal").style.display="flex";
 }
 
 /* ============================================================
@@ -757,6 +830,10 @@ $("resetBtn").addEventListener("click",()=>{
 renderPatterns();                                  // draw the picker + set the gate
 generateBtn.textContent = "Buat " + TARGET + " hook";
 $("targetCount").textContent = TARGET;
+
+/* welcome pop-up: MULAI closes it; upsell pop-up close button */
+$("startBtn").addEventListener("click", ()=>{ $("welcomeModal").style.display="none"; $("topic").focus(); });
+$("upsellClose").addEventListener("click", ()=>{ $("upsellModal").style.display="none"; });
 </script>
 </body>
 </html>
