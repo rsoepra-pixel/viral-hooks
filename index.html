@@ -418,7 +418,7 @@ async function callModel(systemText, userText){
           email:($("email").value||"").trim(), model:MODEL, max_tokens:1500, messages:body.messages })
       });
       if (r.status === 429){ const j = await r.json().catch(()=>({})); throw new Error(j.error || "Daily limit reached."); }
-      if (!r.ok) throw new Error("Server error "+r.status);
+      if (!r.ok){ const j = await r.json().catch(()=>({})); throw new Error(j.detail || j.error || ("Server error "+r.status)); }
       return await r.json();
     }
     // Direct call (artifact preview)
@@ -555,7 +555,7 @@ async function run(){
         const hooks=await generateCategory(c.key,c.def,topic,platforms);
         RESULTS[i].hooks=hooks; RESULTS[i].status="done"; setStep(i,"done");
       }catch(err){
-        RESULTS[i].status="failed"; setStep(i,"failed");
+        RESULTS[i].status="failed"; RESULTS[i].err=err.message; setStep(i,"failed");
         console.warn("Category failed:",c.key,err.message);
       }
       completedCats++;
@@ -619,7 +619,7 @@ function renderResults(){
 
     if(r.status==="failed"){
       const e=document.createElement("div"); e.className="errbox";
-      e.textContent="Set ini gagal dibuat. Hook lainnya aman — cukup ulangi yang ini.";
+      e.textContent = "Set ini gagal dibuat. " + (r.err ? ("Alasan: " + r.err) : "Hook lainnya aman — cukup ulangi yang ini.");
       g.appendChild(e);
     } else if(r.hooks.length===0){
       const e=document.createElement("div"); e.className="empty"; e.textContent="…";
