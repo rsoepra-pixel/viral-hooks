@@ -14,6 +14,8 @@ const RUN_TTL_MS    = 60 * 60 * 1000;            // a run token stays valid 1 ho
 const GLOBAL_DAILY_RUNS = Number(process.env.GLOBAL_DAILY_RUNS || 500); // #1 spend cap (all users/day)
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const TZ            = "Asia/Jakarta";            // day boundary for "5 per day"
+// Accept either env var name so it works whether you named it ANTHROPIC_API_KEY or CLAUDE_API_KEY
+const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
 
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), {
@@ -45,7 +47,7 @@ async function callAnthropic(payload) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "x-api-key": API_KEY,
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify(payload)
@@ -61,7 +63,7 @@ async function callAnthropic(payload) {
 export default async (req) => {
   if (req.method === "OPTIONS") return new Response("", { status: 204 });
   if (req.method !== "POST")    return json({ error: "POST only" }, 405);
-  if (!process.env.ANTHROPIC_API_KEY) return json({ error: "Server missing API key." }, 500);
+  if (!API_KEY) return json({ error: "Server missing API key." }, 500);
 
   let body;
   try { body = await req.json(); } catch { return json({ error: "Bad JSON" }, 400); }
