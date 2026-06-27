@@ -15,7 +15,7 @@ const GLOBAL_DAILY_RUNS = Number(process.env.GLOBAL_DAILY_RUNS || 500); // #1 sp
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const TZ            = "Asia/Jakarta";            // day boundary for "5 per day"
 // Accept either env var name so it works whether you named it ANTHROPIC_API_KEY or CLAUDE_API_KEY
-const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+const API_KEY = process.env.MY_ANTHROPIC_KEY || process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
 
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), {
