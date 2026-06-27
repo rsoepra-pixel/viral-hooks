@@ -66,6 +66,21 @@ async function callAnthropic(payload) {
 
 export default async (req) => {
   if (req.method === "OPTIONS") return new Response("", { status: 204 });
+
+  // ---- TEMPORARY DEBUG: open this function's URL in a browser (GET) to inspect
+  //      the key the function actually uses. Shows only length/prefix/last4 —
+  //      NOT the key itself. Remove this block once everything works. ----
+  if (req.method === "GET") {
+    return json({
+      debug: true,
+      keyPresent: !!API_KEY,
+      keyLength: API_KEY ? API_KEY.length : 0,
+      keyPrefix: API_KEY ? API_KEY.slice(0, 12) : "",   // e.g. "sk-ant-api03" (format, not secret)
+      keyTail:   API_KEY ? API_KEY.slice(-4) : "",       // should be "wAAA"
+      startsWithSkAnt: API_KEY ? API_KEY.startsWith("sk-ant-") : false
+    });
+  }
+
   if (req.method !== "POST")    return json({ error: "POST only" }, 405);
   if (!API_KEY) return json({ error: "Server missing API key." }, 500);
 
