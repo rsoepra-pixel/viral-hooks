@@ -1,433 +1,762 @@
-<!DOCTYPE html>
-<html lang="id">
+<!doctype html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Viral Hooks - CreatorCenter.id</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CreatorCenter.id — AI ViralHook</title>
+
+<!-- jsPDF for PDF export. cdnjs is an allowed source. If it fails to load,
+     the app falls back to the browser's print-to-PDF, so PDF still works. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0a0a0a; color: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; min-height: 100vh; }
-.container { max-width: 900px; margin: 0 auto; }
-header { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #222; }
-.brand { font-weight: bold; font-size: 18px; color: #7eff00; }
-.trial-badge { background: #7eff00; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; }
-.trial-info { font-size: 12px; color: #999; margin-top: 8px; }
-.section { background: #111; border: 1px solid #222; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-.section h3 { margin-bottom: 15px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #7eff00; }
-input { background: #0a0a0a; border: 1px solid #333; color: #f0f0f0; padding: 10px; border-radius: 4px; width: 100%; margin-bottom: 10px; font-size: 13px; }
-button { background: #7eff00; color: #000; border: none; padding: 12px 24px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 13px; width: 100%; }
-button:disabled { background: #666; cursor: not-allowed; }
-button:hover:not(:disabled) { background: #9fff33; }
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
-.modal-overlay.show { display: flex; }
-.modal-box { background: #111; border: 2px solid #7eff00; padding: 40px; border-radius: 8px; text-align: center; max-width: 600px; }
-.modal-box h2 { color: #7eff00; margin-bottom: 20px; font-size: 28px; }
-.modal-box p { margin: 15px 0; line-height: 1.6; }
-.feature { background: #0a0a0a; padding: 12px; margin: 12px 0; border-left: 3px solid #7eff00; text-align: left; }
-.progress-box { background: #0a0a0a; border: 1px solid #333; padding: 20px; border-radius: 4px; margin-bottom: 20px; display: none; }
-.progress-label { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.hourglass { font-size: 20px; animation: hourglassFlip 1.5s infinite; }
-@keyframes hourglassFlip { 0% { transform: rotateZ(0deg); } 50% { transform: rotateZ(180deg); } }
-.checkmark { color: #7eff00; font-size: 20px; animation: checkmarkPop 0.6s ease-out; }
-@keyframes checkmarkPop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-.progress-bar { background: #222; height: 6px; border-radius: 3px; margin: 10px 0; overflow: hidden; }
-.progress-fill { background: #7eff00; height: 100%; width: 0%; transition: width 0.3s; }
-.log-box { background: #0a0a0a; border: 1px solid #333; padding: 15px; border-radius: 4px; max-height: 300px; overflow-y: auto; font-size: 11px; font-family: monospace; margin-top: 15px; }
-.log-line { margin: 4px 0; }
-.log-success { color: #7eff00; }
-.log-error { color: #ff7a4a; }
-.log-warn { color: #f59e0b; }
-.hooks-section { display: none; }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
-.stat { background: #0a0a0a; border: 1px solid #333; padding: 15px; border-radius: 4px; text-align: center; }
-.stat-n { font-size: 24px; font-weight: bold; color: #7eff00; }
-.stat-l { font-size: 11px; color: #999; margin-top: 5px; text-transform: uppercase; }
-.hooks-grid { display: grid; gap: 10px; margin-top: 20px; }
-.hook-card { background: #0a0a0a; border: 1px solid #333; padding: 12px; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 11px; }
-.hook-card:hover { border-color: #7eff00; background: #111; }
-.hook-cat { color: #7eff00; font-size: 10px; text-transform: uppercase; margin-bottom: 6px; }
-.hook-text { margin: 6px 0; padding: 8px; background: #0a0a0a; border-left: 2px solid #7eff00; }
-.hook-info { color: #999; font-size: 10px; margin-top: 6px; }
-.filter-bar { display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; }
-.filter-btn { background: #222; border: 1px solid #333; color: #f0f0f0; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; white-space: nowrap; }
-.filter-btn.active { background: #7eff00; color: #000; }
-.export-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-.export-buttons button { font-size: 12px; padding: 10px; }
-#pdfTable { display: none; }
+  :root{
+    --ink:#0c0d12;          /* near-black base            */
+    --ink-2:#15171f;        /* raised dark surface        */
+    --paper:#f7f7f4;        /* light work area            */
+    --line:#e6e6df;         /* hairline on paper          */
+    --line-dark:#262936;    /* hairline on ink            */
+    --text:#1a1c22;         /* body text on paper         */
+    --muted:#6c6f7a;        /* secondary text             */
+    --muted-dark:#9aa0b0;   /* secondary text on ink      */
+    --spark-a:#ff2d75;      /* signature: hot magenta     */
+    --spark-b:#7a5cff;      /* signature: electric violet */
+    --signal:#15c26b;       /* "it works" green           */
+    --warn:#e8b400;
+    --radius:14px;
+    --maxw:980px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--text);
+    background:var(--paper);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+
+  /* ---------------- HERO / WELCOME ---------------- */
+  .hero{
+    background:
+      radial-gradient(1200px 500px at 80% -10%, rgba(122,92,255,.22), transparent 60%),
+      radial-gradient(900px 500px at 0% 110%, rgba(255,45,117,.18), transparent 55%),
+      var(--ink);
+    color:#fff;
+    border-bottom:1px solid var(--line-dark);
+  }
+  .hero .wrap{padding-top:54px;padding-bottom:46px}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--muted-dark);border:1px solid var(--line-dark);
+    padding:6px 12px;border-radius:999px;
+  }
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;
+    background:var(--signal);box-shadow:0 0 0 4px rgba(21,194,107,.18)}
+  .wordmark{
+    margin:22px 0 8px;font-weight:800;letter-spacing:-.02em;line-height:1.02;
+    font-size:clamp(30px,6vw,58px);
+  }
+  .wordmark .vh{
+    background:linear-gradient(92deg,var(--spark-a),var(--spark-b));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .subhead{color:var(--muted-dark);max-width:54ch;font-size:16px;margin:0 0 6px}
+  .langpill{display:inline-flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .langpill span{font-size:12px;color:#fff;border:1px solid var(--line-dark);
+    padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.04)}
+
+  /* ---------------- CONTROL CARD ---------------- */
+  .panel{
+    background:var(--ink-2);border:1px solid var(--line-dark);
+    border-radius:var(--radius);padding:20px;margin-top:26px;
+  }
+  .field{margin-bottom:14px}
+  .field:last-child{margin-bottom:0}
+  label{display:block;font-size:13px;color:var(--muted-dark);margin-bottom:7px;font-weight:600}
+  input[type=text],input[type=email]{
+    width:100%;background:#0c0d12;border:1px solid var(--line-dark);
+    color:#fff;border-radius:10px;padding:13px 14px;font-size:15px;outline:none;
+  }
+  input:focus{border-color:var(--spark-b);box-shadow:0 0 0 3px rgba(122,92,255,.25)}
+  .platforms{display:flex;gap:8px;flex-wrap:wrap}
+  .patterns{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  @media (max-width:560px){.patterns{grid-template-columns:1fr}}
+  .patterns .pat{
+    cursor:pointer;user-select:none;border:1px solid var(--line-dark);background:#0c0d12;
+    border-radius:10px;padding:10px 12px;transition:.15s;
+  }
+  .patterns .pat[aria-pressed=true]{
+    border-color:transparent;
+    background:linear-gradient(92deg,rgba(255,45,117,.18),rgba(122,92,255,.18));
+    box-shadow:inset 0 0 0 1px var(--spark-b);
+  }
+  .patterns .pat .pn{display:block;font-size:13px;font-weight:700;color:#fff}
+  .patterns .pat .pd{display:block;font-size:11px;color:var(--muted-dark);margin-top:2px}
+  .patterns .pat[aria-disabled=true]{opacity:.4;cursor:not-allowed}
+  .chip{
+    cursor:pointer;user-select:none;font-size:13px;color:#cfd2dc;
+    border:1px solid var(--line-dark);background:#0c0d12;
+    padding:9px 13px;border-radius:999px;transition:.15s;
+  }
+  .chip[aria-pressed=true]{
+    color:#fff;border-color:transparent;
+    background:linear-gradient(92deg,var(--spark-a),var(--spark-b));
+  }
+  .row{display:flex;gap:14px;flex-wrap:wrap}
+  .row .field{flex:1 1 240px}
+  .cta{
+    margin-top:18px;width:100%;cursor:pointer;border:none;
+    font-size:16px;font-weight:700;color:#fff;border-radius:11px;padding:15px 18px;
+    background:linear-gradient(92deg,var(--spark-a),var(--spark-b));
+    transition:transform .08s ease, opacity .2s;
+  }
+  .cta:hover{transform:translateY(-1px)}
+  .cta:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .quota{margin-top:12px;font-size:12px;color:var(--muted-dark);text-align:center}
+  .quota b{color:#fff}
+
+  .disclosure{
+    margin-top:14px;font-size:12px;color:var(--muted-dark);
+    border-left:2px solid var(--warn);padding:8px 12px;background:rgba(232,180,0,.06);
+    border-radius:0 8px 8px 0;
+  }
+
+  /* ---------------- WORK AREA (PAPER) ---------------- */
+  .work{padding:30px 0 70px}
+  .progress-card{
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px;margin-bottom:22px;
+  }
+  .progress-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .progress-head h3{margin:0;font-size:15px;letter-spacing:-.01em}
+  .progress-head .pct{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--spark-b)}
+  .meter{height:14px;border-radius:999px;background:#ecece6;overflow:hidden;position:relative}
+  .meter .fill{
+    height:100%;width:0%;border-radius:999px;
+    background:linear-gradient(92deg,var(--spark-a),var(--spark-b));
+    transition:width .5s cubic-bezier(.2,.8,.2,1);position:relative;
+  }
+  /* moving shimmer = "AI is working" animation */
+  .meter .fill::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.45) 50%,transparent 80%);
+    transform:translateX(-100%);
+  }
+  .meter.busy .fill::after{animation:sweep 1.1s linear infinite}
+  @keyframes sweep{to{transform:translateX(100%)}}
+  .steps{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .step{font-size:11px;padding:4px 8px;border-radius:7px;border:1px solid var(--line);color:var(--muted)}
+  .step.done{border-color:var(--signal);color:#0a7a44;background:rgba(21,194,107,.08)}
+  .step.active{border-color:var(--spark-b);color:#5b3df0;background:rgba(122,92,255,.08)}
+  .step.failed{border-color:var(--spark-a);color:#c01457;background:rgba(255,45,117,.08)}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+  .btn{
+    cursor:pointer;font-size:14px;font-weight:600;border-radius:10px;padding:11px 15px;
+    border:1px solid var(--line);background:#fff;color:var(--text);transition:.12s;
+  }
+  .btn:hover{border-color:#bdbdb4}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .count-tag{margin-left:auto;font-size:13px;color:var(--muted)}
+  .count-tag b{color:var(--text)}
+
+  .cat-group{margin-bottom:26px}
+  .cat-head{
+    display:flex;align-items:center;gap:10px;margin:0 0 12px;
+    padding-bottom:8px;border-bottom:1px solid var(--line);
+  }
+  .cat-head .num{
+    font-size:12px;font-weight:800;color:#fff;background:var(--ink);
+    width:26px;height:26px;border-radius:7px;display:grid;place-items:center;flex:none;
+  }
+  .cat-head h2{margin:0;font-size:16px;letter-spacing:-.01em}
+  .cat-head .def{font-size:12px;color:var(--muted)}
+  .retry-cat{margin-left:auto;font-size:12px}
+
+  .hook{
+    background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;margin-bottom:10px;
+  }
+  .hook .en{font-size:15px;font-weight:600;color:var(--ink);margin:0 0 4px}
+  .hook .id{font-size:14px;color:#33424a;margin:0 0 8px;font-style:italic}
+  .hook .why{font-size:12px;color:var(--muted);display:flex;gap:7px;align-items:flex-start}
+  .hook .why .tag{
+    flex:none;font-size:10px;letter-spacing:.04em;text-transform:uppercase;
+    color:#5b3df0;border:1px solid rgba(122,92,255,.35);border-radius:6px;padding:2px 6px;font-weight:700;
+  }
+
+  .empty,.errbox{
+    background:#fff;border:1px dashed var(--line);border-radius:12px;
+    padding:34px 20px;text-align:center;color:var(--muted);
+  }
+  .errbox{border-color:var(--spark-a);color:#c01457;border-style:solid}
+
+  .hidden{display:none !important}
+  footer{border-top:1px solid var(--line);padding:22px 0;color:var(--muted);font-size:12px}
+  a.link{color:var(--spark-b);text-decoration:none}
+
+  @media (prefers-reduced-motion: reduce){
+    .meter.busy .fill::after{animation:none}
+    .cta:hover{transform:none}
+  }
 </style>
 </head>
 <body>
 
-<div id="trialModal" class="modal-overlay">
-  <div class="modal-box">
-    <h2>🎉 Selamat Datang</h2>
-    <p style="font-size: 12px; color: #7eff00; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">CreatorCenter.id AI-Powered Tools</p>
-    <p><strong>Uji Coba 90 Hari Gratis</strong></p>
-    <p>Hasilkan 30 hook viral BILINGUAL (Indonesia 🇮🇩 & English 🇬🇧)</p>
-    <div class="feature">✓ Setiap hook dalam 2 bahasa</div>
-    <div class="feature">✓ 5 searches per hari</div>
-    <div class="feature">✓ Dukungan Claude AI Sonnet 4.6</div>
-    <div class="feature">✓ Export CSV dan PDF</div>
-    <div class="feature">✓ 3 concurrent batches untuk kecepatan</div>
-    <button onclick="acceptTrial()">Setuju & Mulai Uji Coba 90 Hari</button>
-  </div>
-</div>
+<!-- ============== WELCOME / HERO ============== -->
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow"><span class="dot"></span> Alat kreator</span>
+    <h1 class="wordmark">CREATORCENTER.ID<br><span class="vh">AI VIRALHOOK</span></h1>
+    <p class="subhead">Ubah satu topik jadi 25 hook yang bikin berhenti scroll — tiap hook dibangun dari pola atensi yang terdokumentasi, ditulis dalam Bahasa Indonesia dan Inggris.</p>
+    <div class="langpill"><span>🇮🇩 Bahasa Indonesia</span><span>🇬🇧 English</span><span>⬇ Ekspor CSV &amp; PDF</span></div>
 
-<div id="successPopup" class="modal-overlay">
-  <div class="modal-box">
-    <div style="font-size: 48px; margin-bottom: 20px;">✓</div>
-    <p id="successMsg">SUCCESS!</p>
-    <button onclick="closeSuccessPopup()" style="margin-top: 20px; width: auto;">OK</button>
-  </div>
-</div>
+    <div class="panel" id="panel">
+      <div class="field">
+        <label for="topic">Topik kamu</label>
+        <input id="topic" type="text" placeholder="mis. rutinitas pagi untuk orang tua sibuk" autocomplete="off" />
+      </div>
 
-<div class="container">
-  <header>
-    <div>
-      <div class="brand">@CREATORCENTER.ID</div>
-      <div class="trial-badge">UJI COBA 90 HARI</div>
-      <div class="trial-info">
-        <span id="trialDays">90</span> hari tersisa | 
-        <span id="dailyUsage">5</span>/5 searches hari ini
+      <div class="field">
+        <label>Pilih 5 pola hook (<span id="patCount">0</span>/5 dipilih)</label>
+        <div class="patterns" id="patterns"></div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Fokus platform (gaya saja)</label>
+          <div class="platforms" id="platforms">
+            <span class="chip" data-p="Twitter/X" aria-pressed="true" role="button" tabindex="0">Twitter / X</span>
+            <span class="chip" data-p="LinkedIn" aria-pressed="true" role="button" tabindex="0">LinkedIn</span>
+            <span class="chip" data-p="YouTube" aria-pressed="true" role="button" tabindex="0">YouTube</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="email">Email (opsional — untuk batas pemakaian saat produksi)</label>
+          <input id="email" type="email" placeholder="kamu@email.com" autocomplete="off" />
+        </div>
+      </div>
+
+      <button class="cta" id="generateBtn">Buat 25 hook</button>
+      <div class="quota" id="quota">Sesi demo: <b id="left">5</b> dari 5 percobaan tersisa hari ini · akses 90 hari</div>
+
+      <div class="disclosure">
+        Hook dibuat dari pola copywriting yang terdokumentasi dan dijelaskan berdasarkan prinsip.
+        Alat ini <b>tidak</b> mengklaim jumlah view nyata atau bahwa suatu unggahan pasti viral — tanpa metrik palsu.
       </div>
     </div>
-  </header>
-
-  <div class="section">
-    <h3>⚡ Powered by Claude AI</h3>
-    <p style="font-size: 12px; color: #999;">Bilingual hooks (3 concurrent batches = 30 hooks). Setiap hook dalam 2 bahasa!</p>
   </div>
+</header>
 
-  <div class="section">
-    <h3>Generate Hooks</h3>
-    <input type="text" id="topic" placeholder="Topic (e.g. wellness coaching)">
-    <input type="text" id="audience" placeholder="Audience (e.g. Indonesian parents)">
-    <button onclick="generate()" id="btnGen">Generate 30 Bilingual Hooks</button>
-  </div>
+<!-- ============== WORK AREA ============== -->
+<main class="work">
+  <div class="wrap">
 
-  <div class="progress-box" id="progBox">
-    <div class="progress-label">
-      <span>GENERATING (3 CONCURRENT)...</span>
-      <span class="hourglass" id="statusIcon">⏳</span>
+    <!-- progress -->
+    <section class="progress-card hidden" id="progressCard">
+      <div class="progress-head">
+        <h3 id="progressTitle">Memproses…</h3>
+        <span class="pct" id="pct">0%</span>
+      </div>
+      <div class="meter busy" id="meter"><div class="fill" id="fill"></div></div>
+      <div class="steps" id="steps"></div>
+    </section>
+
+    <!-- toolbar -->
+    <div class="toolbar hidden" id="toolbar">
+      <button class="btn primary" id="csvBtn">⬇ Unduh CSV</button>
+      <button class="btn" id="pdfBtn">⬇ Unduh PDF</button>
+      <button class="btn" id="resetBtn">↺ Topik baru</button>
+      <span class="count-tag"><b id="doneCount">0</b> / <span id="targetCount">25</span> hook untuk “<span id="topicEcho"></span>”</span>
     </div>
-    <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
-    <div class="log-box" id="logBox"></div>
-  </div>
 
-  <div class="hooks-section" id="hooksBox">
-    <div class="stats" id="statsBox"></div>
-    <div class="filter-bar" id="filterBar"></div>
-    <div class="hooks-grid" id="hooksGrid"></div>
-    <div class="export-buttons">
-      <button onclick="downloadCSV()">📥 Download CSV</button>
-      <button onclick="downloadPDF()">📄 Download PDF</button>
-    </div>
-  </div>
-</div>
+    <!-- results -->
+    <div id="results"></div>
 
-<table id="pdfTable" style="width:100%; border-collapse:collapse;">
-  <tr style="background:#f0f0f0; color:#000;">
-    <th style="border:1px solid #000; padding:8px;">No</th>
-    <th style="border:1px solid #000; padding:8px;">Category</th>
-    <th style="border:1px solid #000; padding:8px;">Indonesian</th>
-    <th style="border:1px solid #000; padding:8px;">English</th>
-    <th style="border:1px solid #000; padding:8px;">Platform</th>
-    <th style="border:1px solid #000; padding:8px;">Emotion</th>
-  </tr>
-</table>
+    <!-- first-load placeholder -->
+    <div class="empty" id="placeholder">Masukkan topik di atas lalu buat 25 hook pertamamu.</div>
+
+  </div>
+</main>
+
+<footer><div class="wrap">CreatorCenter.id · AI ViralHook — generator hook dwibahasa. Dibuat untuk ide jujur berbasis pola.</div></footer>
 
 <script>
-var allHooks = [];
-var isGenerating = false;
-var hasLocalStorage = true;
+/* ============================================================
+   CONFIG
+   ============================================================
+   USE_BACKEND_FUNCTION:
+     false -> calls the Anthropic API directly (works inside the
+              Claude artifact preview; the sandbox injects the key).
+     true  -> calls your Netlify function at FUNCTION_URL instead,
+              which holds the API key + enforces the real rate limit.
+   FLIP THIS TO true BEFORE DEPLOYING TO NETLIFY.
+   ============================================================ */
+const USE_BACKEND_FUNCTION = true;
+const FUNCTION_URL = "/.netlify/functions/generate-hooks";
+const MODEL = "claude-sonnet-4-6";
 
-function checkLocalStorage() {
-  try {
-    localStorage.setItem("__test__", "__test__");
-    localStorage.removeItem("__test__");
-    return true;
-  } catch(e) {
-    return false;
+// All 10 documented hook archetypes.
+//   key/def  -> English, used to steer the model (it follows English instructions well)
+//   id/desc  -> Bahasa Indonesia, shown to the user in the picker, steps, tags, exports
+const ALL_CATEGORIES = [
+  { key:"Curiosity Gap",            def:"withholds one key detail so the reader needs to know",
+    id:"Rasa Penasaran",           desc:"menyembunyikan satu detail kunci agar pembaca penasaran" },
+  { key:"Contrarian",               def:"challenges a common belief / interrupts the pattern",
+    id:"Lawan Arus",               desc:"menantang keyakinan umum / memutus pola pikir" },
+  { key:"Social Proof & Authority", def:"leverages results, credentials, or how many people",
+    id:"Bukti Sosial & Otoritas",  desc:"memakai hasil, kredensial, atau jumlah orang" },
+  { key:"Loss & Warning",           def:"highlights a mistake, risk, or cost of inaction",
+    id:"Peringatan & Kerugian",    desc:"menyoroti kesalahan, risiko, atau kerugian bila diam" },
+  { key:"Direct Promise",           def:"states a clear benefit plus a method (how-to)",
+    id:"Janji Langsung",           desc:"manfaat jelas plus caranya (how-to)" },
+  { key:"Number & List",            def:"uses a specific count for concreteness",
+    id:"Angka & Daftar",           desc:"memakai angka spesifik agar terasa konkret" },
+  { key:"Story / Open Loop",        def:"starts a narrative the reader must see resolved",
+    id:"Cerita / Penasaran Terbuka", desc:"memulai cerita yang harus pembaca tuntaskan" },
+  { key:"Provocative Question",     def:"asks something the reader must answer in their head",
+    id:"Pertanyaan Provokatif",    desc:"menanyakan hal yang dijawab pembaca dalam hati" },
+  { key:"Urgency & Timeliness",     def:"ties relevance to now, a deadline, or a trend",
+    id:"Urgensi & Momen",          desc:"mengaitkan dengan sekarang, tenggat, atau tren" },
+  { key:"Transformation",           def:"paints a vivid before -> after change",
+    id:"Transformasi",             desc:"menggambarkan perubahan sebelum → sesudah" }
+];
+// User picks exactly REQUIRED_PATTERNS; each yields PER_CATEGORY hooks.
+const PER_CATEGORY     = 5;
+const REQUIRED_PATTERNS = 5;
+const TARGET           = REQUIRED_PATTERNS * PER_CATEGORY;   // 25
+const SELECTED = new Set([0,1,2,3,4]);   // default selection (first five)
+let CATEGORIES = [];                       // resolved from SELECTED at generate time
+
+/* ---------------- demo-only usage counter ----------------
+   In the artifact preview we cannot use browser storage, so this
+   is an in-memory counter that resets on reload — it only DEMONSTRATES
+   the UX. Real, persistent enforcement (5/day, 90-day window) lives
+   in the Netlify function via Netlify Blobs. ------------------------- */
+let runsLeft = 5;
+let RUN_TOKEN = null;
+
+/* ---------------- element refs ---------------- */
+const $ = id => document.getElementById(id);
+const platformsEl = $("platforms");
+const generateBtn = $("generateBtn");
+
+/* platform chips */
+platformsEl.addEventListener("click", e => toggleChip(e.target));
+platformsEl.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.classList.contains("chip")){
+    e.preventDefault(); toggleChip(e.target);
   }
+});
+function toggleChip(el){
+  if(!el.classList.contains("chip")) return;
+  el.setAttribute("aria-pressed", el.getAttribute("aria-pressed")==="true" ? "false":"true");
+}
+function selectedPlatforms(){
+  return [...platformsEl.querySelectorAll('.chip[aria-pressed=true]')].map(c=>c.dataset.p);
 }
 
-function initTrial() {
-  hasLocalStorage = checkLocalStorage();
-  var accepted = getStorage("trial_accepted");
-  if (!accepted) {
-    document.getElementById("trialModal").classList.add("show");
-  } else {
-    updateTrialInfo();
-  }
+/* ---------------- pattern picker (choose exactly REQUIRED_PATTERNS) ---------------- */
+const patternsEl = $("patterns");
+function renderPatterns(){
+  patternsEl.innerHTML = "";
+  ALL_CATEGORIES.forEach((c,i)=>{
+    const on = SELECTED.has(i);
+    const atCap = SELECTED.size >= REQUIRED_PATTERNS;
+    const el = document.createElement("div");
+    el.className = "pat";
+    el.setAttribute("role","button");
+    el.setAttribute("tabindex","0");
+    el.setAttribute("aria-pressed", on ? "true" : "false");
+    if(!on && atCap) el.setAttribute("aria-disabled","true");   // can't pick a 6th
+    el.dataset.i = i;
+    el.innerHTML = `<span class="pn">${c.id}</span><span class="pd">${c.desc}</span>`;
+    patternsEl.appendChild(el);
+  });
+  $("patCount").textContent = SELECTED.size;
+  // gate generation on exactly REQUIRED_PATTERNS
+  generateBtn.disabled = SELECTED.size !== REQUIRED_PATTERNS;
+  generateBtn.style.opacity = generateBtn.disabled ? .5 : "";
+}
+function togglePattern(el){
+  if(!el || !el.classList.contains("pat")) return;
+  const i = Number(el.dataset.i);
+  if(SELECTED.has(i)) SELECTED.delete(i);
+  else { if(SELECTED.size >= REQUIRED_PATTERNS) return; SELECTED.add(i); }
+  renderPatterns();
+}
+patternsEl.addEventListener("click", e => togglePattern(e.target.closest(".pat")));
+patternsEl.addEventListener("keydown", e => {
+  if(e.key==="Enter" || e.key===" "){ e.preventDefault(); togglePattern(e.target.closest(".pat")); }
+});
+function selectedCategories(){
+  return [...SELECTED].sort((a,b)=>a-b).map(i=>ALL_CATEGORIES[i]);
 }
 
-function acceptTrial() {
-  setStorage("trial_accepted", "true");
-  setStorage("trial_start", new Date().toISOString());
-  setStorage("daily_usage", JSON.stringify({}));
-  document.getElementById("trialModal").classList.remove("show");
-  updateTrialInfo();
-}
+/* ============================================================
+   CORE: call the model for one category, with retry + safe parse
+   ============================================================ */
+async function callModel(systemText, userText){
+  const body = {
+    model: MODEL,
+    max_tokens: 1000,                 // artifact rule; the function uses more
+    messages: [{ role:"user", content: systemText + "\n\n" + userText }]
+  };
 
-function getStorage(key) {
-  if (!hasLocalStorage) return sessionStorage.getItem(key);
-  return localStorage.getItem(key);
-}
-
-function setStorage(key, val) {
-  if (hasLocalStorage) {
-    localStorage.setItem(key, val);
-  } else {
-    sessionStorage.setItem(key, val);
-  }
-}
-
-function updateTrialInfo() {
-  var trialStart = getStorage("trial_start");
-  if (!trialStart) return;
-  var start = new Date(trialStart);
-  var now = new Date();
-  var end = new Date(start.getTime() + 90 * 24 * 60 * 60 * 1000);
-  var daysLeft = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-  document.getElementById("trialDays").textContent = Math.max(0, daysLeft);
-  
-  var today = new Date().toISOString().split('T')[0];
-  var dailyUsage = JSON.parse(getStorage("daily_usage") || "{}");
-  var todayUsage = dailyUsage[today] || 0;
-  document.getElementById("dailyUsage").textContent = Math.max(0, 5 - todayUsage);
-}
-
-function canUseToday() {
-  var today = new Date().toISOString().split('T')[0];
-  var dailyUsage = JSON.parse(getStorage("daily_usage") || "{}");
-  var todayUsage = dailyUsage[today] || 0;
-  return todayUsage < 5;
-}
-
-function recordUsage() {
-  var today = new Date().toISOString().split('T')[0];
-  var dailyUsage = JSON.parse(getStorage("daily_usage") || "{}");
-  dailyUsage[today] = (dailyUsage[today] || 0) + 1;
-  setStorage("daily_usage", JSON.stringify(dailyUsage));
-  updateTrialInfo();
-}
-
-function showSuccessPopup(msg) {
-  document.getElementById("successMsg").textContent = msg;
-  document.getElementById("successPopup").classList.add("show");
-}
-
-function closeSuccessPopup() {
-  document.getElementById("successPopup").classList.remove("show");
-}
-
-function log(m, t) {
-  if (!t) t = "success";
-  var el = document.createElement("div");
-  el.className = "log-line log-" + t;
-  el.textContent = m;
-  document.getElementById("logBox").appendChild(el);
-  document.getElementById("logBox").scrollTop = 999999;
-}
-
-function setPct(v) {
-  document.getElementById("progFill").style.width = Math.min(100, v) + "%";
-}
-
-async function generateBatch(topic, audience, cats, batchNum) {
-  try {
-    log("Batch " + batchNum + " (concurrent)...", "warn");
-    var response = await fetch("/.netlify/functions/generate-hooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        topic: topic,
-        audience: audience,
-        categories: cats
-      })
-    });
-    if (!response.ok) {
-      var errData = await response.json();
-      throw new Error(errData.error || "HTTP " + response.status);
-    }
-    var data = await response.json();
-    if (!data.success) {
-      throw new Error(data.error || "Unknown error");
-    }
-    var hooks = data.hooks || [];
-    log("✓ Batch " + batchNum + ": " + hooks.length + " hooks", "success");
-    return hooks;
-  } catch (e) {
-    log("❌ Batch " + batchNum + " ERROR: " + e.message, "error");
-    throw e;
-  }
-}
-
-async function generate() {
-  var topic = document.getElementById("topic").value.trim();
-  var audience = document.getElementById("audience").value.trim();
-  
-  if (!topic) {
-    alert("Please enter a topic");
-    return;
-  }
-  
-  if (!canUseToday()) {
-    alert("Daily limit reached!");
-    return;
-  }
-
-  if (isGenerating) {
-    alert("Generation in progress...");
-    return;
-  }
-
-  isGenerating = true;
-  document.getElementById("btnGen").disabled = true;
-  allHooks = [];
-  document.getElementById("progBox").style.display = "block";
-  document.getElementById("hooksBox").style.display = "none";
-  document.getElementById("logBox").innerHTML = "";
-  setPct(33);
-
-  var batches = [
-    ["Kontarian","Pembuka Cerita","Data & Statistik"],
-    ["Ketakutan & Risiko","Aspirasi","Celah Rasa Ingin Tahu"],
-    ["Tantangan","Bukti Sosial","Cara & Transformasi"]
-  ];
-
-  try {
-    log("Starting 3 concurrent batches...", "warn");
-    var batchPromises = batches.map((cats, idx) => generateBatch(topic, audience, cats, idx + 1));
-    var results = await Promise.all(batchPromises);
-    
-    results.forEach((hookArray, idx) => {
-      hookArray.forEach((h, i) => {
-        h.num = allHooks.length + i + 1;
+  // #5 abort a hung call so retry/backoff can fire instead of freezing
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), 35000);
+  try{
+    if (USE_BACKEND_FUNCTION){
+      const r = await fetch(FUNCTION_URL, {
+        method:"POST", headers:{"Content-Type":"application/json"}, signal:ctrl.signal,
+        body: JSON.stringify({ action:"batch", runToken:RUN_TOKEN,
+          email:($("email").value||"").trim(), model:MODEL, max_tokens:1500, messages:body.messages })
       });
-      allHooks = allHooks.concat(hookArray);
+      if (r.status === 429){ const j = await r.json().catch(()=>({})); throw new Error(j.error || "Daily limit reached."); }
+      if (!r.ok) throw new Error("Server error "+r.status);
+      return await r.json();
+    }
+    // Direct call (artifact preview)
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"}, signal:ctrl.signal, body: JSON.stringify(body)
     });
+    if (!r.ok) throw new Error("API error "+r.status);
+    return await r.json();
+  } finally { clearTimeout(timer); }
+}
 
-    setPct(100);
-    log("✓✓✓ " + allHooks.length + " TOTAL HOOKS (BILINGUAL)", "success");
-    
-    document.getElementById("statusIcon").textContent = "✓";
-    document.getElementById("statusIcon").className = "checkmark";
-    recordUsage();
-    renderHooks();
-  } catch (e) {
-    log("Generation failed", "error");
+/* pull text out of an Anthropic response, tolerant of block shapes */
+function extractText(data){
+  if (data && Array.isArray(data.content)){
+    return data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n");
   }
-
-  isGenerating = false;
-  document.getElementById("btnGen").disabled = false;
+  return (data && data.text) || "";
 }
 
-function renderHooks() {
-  var cats = [];
-  allHooks.forEach(h => {
-    if (!cats.includes(h.cat)) cats.push(h.cat);
-  });
-
-  document.getElementById("statsBox").innerHTML =
-    "<div class='stat'><div class='stat-n'>" + allHooks.length + "</div><div class='stat-l'>Hooks</div></div>" +
-    "<div class='stat'><div class='stat-n'>" + cats.length + "</div><div class='stat-l'>Categories</div></div>" +
-    "<div class='stat'><div class='stat-n'>2x</div><div class='stat-l'>Languages</div></div>";
-
-  var fb = document.getElementById("filterBar");
-  fb.innerHTML = "";
-  ["Semua"].concat(cats).forEach(c => {
-    var b = document.createElement("button");
-    b.className = "filter-btn" + (c==="Semua" ? " active" : "");
-    b.textContent = c;
-    b.onclick = () => filterBy(c);
-    fb.appendChild(b);
-  });
-
-  filterBy("Semua");
-  document.getElementById("hooksBox").style.display = "block";
+/* robust JSON-array parse: strips fences, grabs the array span */
+function parseHooks(text){
+  let t = (text||"").replace(/```json/gi,"").replace(/```/g,"").trim();
+  const a = t.indexOf("["), b = t.lastIndexOf("]");
+  if (a===-1 || b===-1 || b<a) throw new Error("no array");
+  const arr = JSON.parse(t.slice(a,b+1));
+  if (!Array.isArray(arr) || !arr.length) throw new Error("empty array");
+  return arr.filter(h => h && h.en && h.id).map(h => ({
+    en:String(h.en).trim(), id:String(h.id).trim(), why:String(h.why||"").trim()
+  }));
 }
 
-function filterBy(cat) {
-  document.querySelectorAll(".filter-btn").forEach(b => {
-    b.classList.toggle("active", b.textContent === cat);
-  });
+/* generate one category with up to 3 attempts (handles overload/truncation) */
+async function generateCategory(catName, catDef, topic, platforms){
+  const sys =
+`You are a viral content hook strategist for Indonesian creators.
+Generate exactly ${PER_CATEGORY} distinct opening hooks in the "${catName}" style (${catDef}).
+Topic: "${topic}". Platform style: ${platforms.join(", ") || "general"}.
+Return ONLY a JSON array — no prose, no markdown. Each element exactly:
+{"id":"<hook in natural, punchy Bahasa Indonesia>","en":"<the same hook in English>","why":"<dalam Bahasa Indonesia, <=16 kata: pola atensi yang dipakai dan kenapa menarik perhatian>"}
+Hard rules:
+- The "id" hook is the primary; write it in natural everyday Bahasa Indonesia a creator would actually post.
+- Hooks must be specific to the topic, varied, and usable as the first line of a post.
+- "why" is in Bahasa Indonesia and describes the documented pattern/psychology ONLY.
+- Do NOT invent view counts, statistics, fake example posts, or claim any post went viral. No fabricated evidence.`;
+  const usr = `Output the JSON array of ${PER_CATEGORY} hooks now.`;
 
-  var grid = document.getElementById("hooksGrid");
-  grid.innerHTML = "";
-  allHooks.forEach(h => {
-    if (cat !== "Semua" && h.cat !== cat) return;
-    var c = document.createElement("div");
-    c.className = "hook-card";
-    c.innerHTML = "<div class='hook-cat'>" + h.cat + "</div>" +
-      "<div class='hook-text'><strong>🇮🇩 ID:</strong> " + h.text_id + "</div>" +
-      "<div class='hook-text'><strong>🇬🇧 EN:</strong> " + h.text_en + "</div>" +
-      "<div class='hook-info'>" + h.platform + " · " + h.emotion + "</div>";
-    c.onclick = () => {
-      navigator.clipboard.writeText(h.text_id + "\n\n" + h.text_en);
-      alert("✓ Copied!");
-    };
-    grid.appendChild(c);
+  let lastErr;
+  for (let attempt=1; attempt<=3; attempt++){
+    try{
+      const data = await callModel(sys, usr);
+      const hooks = parseHooks(extractText(data));
+      if (hooks.length >= Math.ceil(PER_CATEGORY*0.6)) return hooks.slice(0,PER_CATEGORY);
+      lastErr = new Error("short batch ("+hooks.length+")");
+    }catch(err){
+      lastErr = err;
+    }
+    await sleep(500 * attempt); // backoff
+  }
+  throw lastErr || new Error("failed");
+}
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+/* Ask the backend to authorize one run (enforces 5/day + 90-day window).
+   In demo mode there is no backend, so we use the in-memory counter. */
+async function startRun(){
+  if(!USE_BACKEND_FUNCTION){
+    if(runsLeft<=0){ alert("Batas demo harian tercapai (di sini reset saat halaman dimuat ulang; batas asli ditegakkan di server)."); return false; }
+    return true;
+  }
+  try{
+    const r=await fetch(FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"start", email:($("email").value||"").trim()})});
+    if(r.status===429){ const j=await r.json().catch(()=>({})); alert(j.error||"Batas harian tercapai."); return false; }
+    if(!r.ok){ alert("Tidak bisa memulai (server "+r.status+")."); return false; }
+    const j=await r.json(); RUN_TOKEN=j.runToken;
+    if(j.runsLeft!=null){ $("left").textContent=j.runsLeft; }
+    return true;
+  }catch(e){ alert("Gangguan jaringan saat memulai. Coba lagi."); return false; }
+}
+
+/* ============================================================
+   ORCHESTRATION + UI
+   ============================================================ */
+let RESULTS = [];   // [{cat, def, hooks:[], status}]
+let TOPIC = "";
+
+function buildSteps(){
+  const s = $("steps"); s.innerHTML="";
+  CATEGORIES.forEach((c,i)=>{
+    const d=document.createElement("div");
+    d.className="step"; d.id="step-"+i; d.textContent=c.id;
+    s.appendChild(d);
+  });
+}
+function setStep(i,state){
+  const el=$("step-"+i); if(!el) return;
+  el.className="step "+(state||"");
+}
+function setProgress(p){
+  $("fill").style.width=p+"%"; $("pct").textContent=Math.round(p)+"%";
+}
+
+async function run(){
+  if(generateBtn.disabled) return;                 // #2 guard against re-entry
+  const topic = ($("topic").value||"").trim();
+  if(!topic){ $("topic").focus(); $("topic").style.borderColor="var(--spark-a)"; return; }
+
+  generateBtn.disabled=true; generateBtn.textContent="Memproses…";   // #2 lock FIRST
+
+  try{
+    // Authorize this run (daily limit + 90-day window). Aborts if not allowed.
+    const ok = await startRun();
+    if(!ok) return;                                 // finally restores the button
+
+    TOPIC = topic;
+    const platforms = selectedPlatforms();
+    CATEGORIES = selectedCategories();              // the 5 patterns chosen on the welcome screen
+
+    $("placeholder").classList.add("hidden");
+    $("results").innerHTML="";
+    $("toolbar").classList.add("hidden");
+    $("progressCard").classList.remove("hidden");
+    $("progressTitle").textContent='Membuat '+TARGET+' hook untuk “'+topic+'”';
+    $("meter").classList.add("busy");
+    buildSteps(); setProgress(2);
+
+    RESULTS = CATEGORIES.map(c=>({cat:c.key, def:c.def, nameID:c.id, descID:c.desc, hooks:[], status:"pending"}));
+    let completedCats=0;
+
+    for(let i=0;i<CATEGORIES.length;i++){
+      const c=CATEGORIES[i];
+      setStep(i,"active");
+      try{
+        const hooks=await generateCategory(c.key,c.def,topic,platforms);
+        RESULTS[i].hooks=hooks; RESULTS[i].status="done"; setStep(i,"done");
+      }catch(err){
+        RESULTS[i].status="failed"; setStep(i,"failed");
+        console.warn("Category failed:",c.key,err.message);
+      }
+      completedCats++;
+      setProgress(2 + (completedCats/CATEGORIES.length)*96);
+      renderResults();           // progressive render — never lose finished work
+    }
+
+    // #4 Top-up pass: one extra attempt for any pattern short of a full set,
+    // so the target count holds instead of silently shipping fewer.
+    $("progressTitle").textContent="Melengkapi hingga "+TARGET+"…";
+    for(let i=0;i<CATEGORIES.length;i++){
+      if(RESULTS[i].hooks.length>=PER_CATEGORY) continue;
+      const c=CATEGORIES[i]; setStep(i,"active");
+      try{
+        const more=await generateCategory(c.key,c.def,topic,platforms);
+        if(more.length>RESULTS[i].hooks.length){ RESULTS[i].hooks=more; }
+        RESULTS[i].status = RESULTS[i].hooks.length?"done":"failed";
+        setStep(i, RESULTS[i].hooks.length?"done":"failed");
+      }catch(_){ setStep(i, RESULTS[i].hooks.length?"done":"failed"); }
+      renderResults();
+    }
+    setProgress(100);
+
+    const total = RESULTS.reduce((n,r)=>n+r.hooks.length,0);
+    const anyFail = RESULTS.some(r=>r.hooks.length<PER_CATEGORY);
+    $("progressTitle").textContent = anyFail
+      ? "Selesai — "+total+" hook (coba ulang set yang belum lengkap di bawah)"
+      : "Selesai — "+total+" hook dibuat";
+    $("toolbar").classList.remove("hidden");
+    $("doneCount").textContent=total; $("topicEcho").textContent=topic;
+
+    runsLeft=Math.max(0,runsLeft-1);
+    if(!USE_BACKEND_FUNCTION) $("left").textContent=runsLeft;
+    if(total>0 && !anyFail) setTimeout(()=>$("progressCard").classList.add("hidden"),1400);
+  }
+  catch(err){
+    console.error(err);
+    $("progressTitle").textContent="Ada yang tidak beres — silakan coba lagi.";
+  }
+  finally{
+    generateBtn.disabled = SELECTED.size !== REQUIRED_PATTERNS;   // re-gate on selection
+    generateBtn.textContent="Buat "+TARGET+" hook";  // #3 always restore
+    $("meter").classList.remove("busy");
+  }
+}
+
+function renderResults(){
+  const root=$("results"); root.innerHTML="";
+  RESULTS.forEach((r,i)=>{
+    const g=document.createElement("div"); g.className="cat-group";
+    const head=document.createElement("div"); head.className="cat-head";
+    head.innerHTML=`<span class="num">${String(i+1).padStart(2,"0")}</span>
+      <div><h2>${esc(r.nameID)}</h2><div class="def">${esc(r.descID)}</div></div>`;
+    if(r.status==="failed"){
+      const btn=document.createElement("button");
+      btn.className="btn retry-cat"; btn.textContent="↻ Coba ulang set ini";
+      btn.onclick=()=>retryCategory(i);
+      head.appendChild(btn);
+    }
+    g.appendChild(head);
+
+    if(r.status==="failed"){
+      const e=document.createElement("div"); e.className="errbox";
+      e.textContent="Set ini gagal dibuat. Hook lainnya aman — cukup ulangi yang ini.";
+      g.appendChild(e);
+    } else if(r.hooks.length===0){
+      const e=document.createElement("div"); e.className="empty"; e.textContent="…";
+      g.appendChild(e);
+    } else {
+      r.hooks.forEach(h=>{
+        const c=document.createElement("div"); c.className="hook";
+        // Indonesian hook is primary (bold), English is the secondary reference line.
+        c.innerHTML=`<p class="en">${esc(h.id)}</p>
+          <p class="id">EN: ${esc(h.en)}</p>
+          <div class="why"><span class="tag">${esc(r.nameID)}</span><span>${esc(h.why)}</span></div>`;
+        g.appendChild(c);
+      });
+    }
+    root.appendChild(g);
   });
 }
 
-function downloadCSV() {
-  try {
-    var csv = "No,Category,Indonesian,English,Platform,Emotion\n";
-    allHooks.forEach(h => {
-      var id_text = h.text_id.replace(/"/g, '""');
-      var en_text = h.text_en.replace(/"/g, '""');
-      csv += h.num + ',"' + h.cat + '","' + id_text + '","' + en_text + '",' + h.platform + ',' + h.emotion + '\n';
+async function retryCategory(i){
+  RESULTS[i].status="pending"; renderResults();
+  try{
+    RESULTS[i].hooks=await generateCategory(RESULTS[i].cat,RESULTS[i].def,TOPIC,selectedPlatforms());
+    RESULTS[i].status="done";
+  }catch(e){ RESULTS[i].status="failed"; }
+  renderResults();
+  const total=RESULTS.reduce((n,r)=>n+r.hooks.length,0);
+  $("doneCount").textContent=total;
+}
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+// #8 jsPDF's default font is Latin-1; map common smart punctuation to ASCII
+// so curly quotes / dashes don't render as garbage. (HTML print fallback keeps Unicode.)
+function pdfSafe(s){
+  return String(s)
+    .replace(/[\u2018\u2019\u201A\u2032]/g,"'")
+    .replace(/[\u201C\u201D\u201E\u2033]/g,'"')
+    .replace(/[\u2013\u2014]/g,"-")
+    .replace(/\u2026/g,"...")
+    .replace(/[^\x00-\xFF]/g,"");   // drop anything still outside Latin-1 (e.g. emoji)
+}
+
+/* ---------------- EXPORTS ---------------- */
+function flatRows(){
+  const rows=[];
+  RESULTS.forEach((r,ci)=>r.hooks.forEach((h,hi)=>rows.push({
+    no:rows.length+1, pola:r.nameID,
+    en:h.en, id:h.id, why:h.why
+  })));
+  return rows;
+}
+function downloadCSV(){
+  const rows=flatRows();
+  if(!rows.length) return;
+  const head=["No","Pola","Hook (Bahasa Indonesia)","Hook (English)","Kenapa berhasil (pola)"];
+  // #9 prevent Excel/Sheets from executing a cell starting with = + - @ as a formula
+  const safe=v=>{ const s=String(v); return /^[=+\-@\t\r]/.test(s) ? "'"+s : s; };
+  const q=v=>'"'+safe(v).replace(/"/g,'""')+'"';
+  const csv=[head.map(q).join(",")]
+    .concat(rows.map(r=>[r.no,r.pola,r.id,r.en,r.why].map(q).join(",")))
+    .join("\r\n");
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+  triggerDownload(blob, fname("csv"));
+}
+function downloadPDF(){
+  const rows=flatRows();
+  if(!rows.length) return;
+  // Preferred: jsPDF (real file). Fallback: print-to-PDF if the lib didn't load.
+  const hasJsPDF = window.jspdf && window.jspdf.jsPDF;
+  if(!hasJsPDF){ printFallback(rows); return; }
+  try{
+    const { jsPDF }=window.jspdf;
+    const doc=new jsPDF({unit:"pt",format:"a4"});
+    const M=40, W=doc.internal.pageSize.getWidth(), PH=doc.internal.pageSize.getHeight();
+    let y=M;
+    doc.setFont("helvetica","bold"); doc.setFontSize(16);
+    doc.text(pdfSafe("CreatorCenter.id — AI ViralHook"),M,y); y+=20;
+    doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(110);
+    doc.text(pdfSafe('Topik: '+TOPIC+'  -  '+rows.length+' hook  -  Bahasa Indonesia + English'),M,y); y+=22;
+    doc.setTextColor(20);
+    rows.forEach(r=>{
+      const id=doc.splitTextToSize(pdfSafe(r.no+". "+r.id),W-2*M);          // ID primary
+      const en=doc.splitTextToSize(pdfSafe("EN: "+r.en),W-2*M);
+      const wy=doc.splitTextToSize(pdfSafe("Pola ("+r.pola+"): "+r.why),W-2*M);
+      const block=(en.length+id.length+wy.length)*12+16;
+      if(y+block>PH-M){ doc.addPage(); y=M; }
+      doc.setFont("helvetica","bold"); doc.setFontSize(11); doc.setTextColor(20);
+      doc.text(id,M,y); y+=id.length*13;
+      doc.setFont("helvetica","italic"); doc.setFontSize(10); doc.setTextColor(60);
+      doc.text(en,M,y); y+=en.length*12;
+      doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(120);
+      doc.text(wy,M,y); y+=wy.length*12+8;
     });
-    var blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
-    var link = document.createElement("a");
-    var url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", "hooks_bilingual_30.csv");
-    link.click();
-    showSuccessPopup("✓ CSV Downloaded!");
-  } catch(e) {
-    alert("Download failed");
-  }
+    doc.save(fname("pdf"));
+  }catch(e){ printFallback(rows); }
+}
+function printFallback(rows){
+  const w=window.open("","_blank");
+  if(!w){ alert("Izinkan pop-up untuk ekspor PDF, atau pakai CSV."); return; }
+  const esc2=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  w.document.write(`<html><head><title>ViralHook — ${esc2(TOPIC)}</title>
+   <style>body{font:13px -apple-system,Arial;margin:32px;color:#1a1c22}
+   h1{font-size:18px}.m{color:#777;font-size:11px;margin-bottom:18px}
+   .h{margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid #eee}
+   .en{font-weight:700}.id{font-style:italic;color:#445}.w{font-size:11px;color:#888}</style></head><body>
+   <h1>CreatorCenter.id — AI ViralHook</h1>
+   <div class="m">Topik: ${esc2(TOPIC)} · ${rows.length} hook · Bahasa Indonesia + English</div>
+   ${rows.map(r=>`<div class="h"><div class="en">${r.no}. ${esc2(r.id)}</div>
+     <div class="id">EN: ${esc2(r.en)}</div>
+     <div class="w">Pola (${esc2(r.pola)}): ${esc2(r.why)}</div></div>`).join("")}
+   </body></html>`);
+  w.document.close(); w.focus(); setTimeout(()=>w.print(),350);
+}
+function fname(ext){return "viralhooks_"+TOPIC.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)+"."+ext;}
+function triggerDownload(blob,name){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
 
-function downloadPDF() {
-  try {
-    var table = document.getElementById("pdfTable");
-    var tbody = table.querySelector("tbody");
-    if (tbody) tbody.remove();
-    tbody = document.createElement("tbody");
-    allHooks.forEach(h => {
-      var tr = document.createElement("tr");
-      tr.style.borderBottom = "1px solid #ddd";
-      tr.innerHTML = "<td style='border:1px solid #ddd; padding:8px;'>" + h.num + "</td>" +
-        "<td style='border:1px solid #ddd; padding:8px;'>" + h.cat + "</td>" +
-        "<td style='border:1px solid #ddd; padding:8px;'>" + h.text_id + "</td>" +
-        "<td style='border:1px solid #ddd; padding:8px;'>" + h.text_en + "</td>" +
-        "<td style='border:1px solid #ddd; padding:8px;'>" + h.platform + "</td>" +
-        "<td style='border:1px solid #ddd; padding:8px;'>" + h.emotion + "</td>";
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    var options = {
-      margin: 10,
-      filename: "hooks_bilingual_30.pdf",
-      image: {type: "jpeg", quality: 0.98},
-      html2canvas: {scale: 2},
-      jsPDF: {orientation: "landscape", unit: "mm", format: "a4"}
-    };
-    html2pdf().set(options).from(table).save();
-    showSuccessPopup("✓ PDF Downloaded!");
-  } catch(e) {
-    alert("Download failed");
-  }
-}
+/* ---------------- wire up ---------------- */
+generateBtn.addEventListener("click",run);
+$("topic").addEventListener("input",()=>$("topic").style.borderColor="");
+$("topic").addEventListener("keydown",e=>{if(e.key==="Enter")run();});
+$("csvBtn").addEventListener("click",downloadCSV);
+$("pdfBtn").addEventListener("click",downloadPDF);
+$("resetBtn").addEventListener("click",()=>{
+  $("results").innerHTML=""; $("toolbar").classList.add("hidden");
+  $("progressCard").classList.add("hidden"); $("placeholder").classList.remove("hidden");
+  $("topic").value=""; $("topic").focus();
+});
 
-window.onload = function() {
-  initTrial();
-};
+/* ---------------- init ---------------- */
+renderPatterns();                                  // draw the picker + set the gate
+generateBtn.textContent = "Buat " + TARGET + " hook";
+$("targetCount").textContent = TARGET;
 </script>
-
 </body>
 </html>
