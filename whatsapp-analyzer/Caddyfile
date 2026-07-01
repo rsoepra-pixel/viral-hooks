@@ -1,0 +1,6 @@
+# Replace analyzer.example.com with your domain. Caddy fetches a TLS cert
+# automatically. For a private/LAN setup, use `:443` with `tls internal`.
+analyzer.example.com {
+	encode gzip
+	reverse_proxy app:8787
+}

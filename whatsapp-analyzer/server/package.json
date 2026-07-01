@@ -1,0 +1,27 @@
+{
+  "name": "@wa-analyzer/server",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --watch --experimental-strip-types src/index.ts",
+    "start": "node dist/index.js",
+    "hash": "node --experimental-strip-types src/scripts/hash-password.ts"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^10.0.0",
+    "@fastify/multipart": "^9.0.0",
+    "@fastify/static": "^8.0.0",
+    "@wa-analyzer/core": "*",
+    "adm-zip": "^0.5.16",
+    "better-sqlite3": "^11.3.0",
+    "fastify": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

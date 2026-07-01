@@ -1,0 +1,23 @@
+{
+  "name": "whatsapp-ai-chat-analyzer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Privacy-first web app to analyze exported WhatsApp chats with AI for risk patterns (scam, threat, gambling, illegal lending, theft, romance/pig-butchering).",
+  "workspaces": [
+    "core",
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "build:core": "npm run build -w core",
+    "build:web": "npm run build -w web",
+    "build": "npm run build:core && npm run build:web && npm run build -w server",
+    "dev:server": "npm run dev -w server",
+    "dev:web": "npm run dev -w web",
+    "test": "npm run test -w core"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
