@@ -10,6 +10,8 @@ export interface Config {
   dataDir: string;
   retentionDays: number;
   isProd: boolean;
+  /** Master switch for the optional, higher-risk live WhatsApp link. OFF by default. */
+  enableLive: boolean;
 }
 
 /** scrypt hash "salt:hex" — used for the single-user password. */
@@ -35,5 +37,6 @@ export function loadConfig(): Config {
     dataDir: env.DATA_DIR?.trim() || "./data",
     retentionDays: Number(env.RETENTION_DAYS ?? 0),
     isProd: env.NODE_ENV === "production",
+    enableLive: (env.ENABLE_LIVE ?? "false") === "true",
   };
 }

@@ -17,9 +17,11 @@ import {
 import { loadConfig, hashPassword } from "./config.js";
 import { Store } from "./db.js";
 import { runSearch } from "./pipeline.js";
+import { WhatsAppLive } from "./live.js";
 
 const cfg = loadConfig();
 const store = new Store(cfg.dataDir);
+const live = new WhatsAppLive(store, cfg.dataDir, cfg.enableLive, (m) => app.log.info(m));
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = Fastify({ logger: true, bodyLimit: 64 * 1024 * 1024 });
@@ -49,6 +51,7 @@ app.get("/api/health", async () => ({
   ok: true,
   llmConfigured: !!cfg.anthropicKey,
   redact: cfg.redact,
+  liveEnabled: cfg.enableLive,
 }));
 
 app.post("/api/login", async (req, reply) => {
@@ -163,6 +166,58 @@ app.post("/api/search", async (req, reply) => {
     req.log.error(e);
     return reply.code(500).send({ error: e.message ?? "search failed" });
   }
+});
+
+// ---- Feedback (mark false positives) ----
+app.get("/api/feedback", async () => [...store.listFeedback()]);
+app.post("/api/feedback", async (req) => {
+  const { signature } = (req.body as { signature?: string }) ?? {};
+  if (signature) store.addFeedback(signature);
+  return { ok: true };
+});
+app.delete("/api/feedback", async (req) => {
+  const { signature } = (req.body as { signature?: string }) ?? {};
+  if (signature) store.removeFeedback(signature);
+  return { ok: true };
+});
+
+// ---- Saved searches ----
+app.get("/api/saved-searches", async () => store.listSavedSearches());
+app.post("/api/saved-searches", async (req, reply) => {
+  const { name, query } = (req.body as { name?: string; query?: unknown }) ?? {};
+  if (!name || !query) return reply.code(400).send({ error: "name and query required" });
+  const id = randomUUID();
+  store.addSavedSearch(id, name, query);
+  return { id, name, query };
+});
+app.delete("/api/saved-searches/:id", async (req) => {
+  store.deleteSavedSearch((req.params as { id: string }).id);
+  return { ok: true };
+});
+
+// ---- Optional live WhatsApp link (opt-in, off by default) ----
+app.get("/api/live/status", async () => live.status());
+
+app.post("/api/live/pair", async (req, reply) => {
+  const { phone, consent } = (req.body as { phone?: string; consent?: boolean }) ?? {};
+  if (!cfg.enableLive) {
+    return reply.code(403).send({ error: "Live mode is disabled on the server (ENABLE_LIVE=false)." });
+  }
+  if (consent !== true) {
+    return reply.code(400).send({ error: "Explicit consent to the ban-risk notice is required." });
+  }
+  if (!phone) return reply.code(400).send({ error: "phone required" });
+  try {
+    const { code } = await live.pair(phone);
+    return { code };
+  } catch (e: any) {
+    return reply.code(500).send({ error: e.message ?? "pairing failed" });
+  }
+});
+
+app.post("/api/live/logout", async () => {
+  await live.logout();
+  return { ok: true };
 });
 
 // ---- Report ----

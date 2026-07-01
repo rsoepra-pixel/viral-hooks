@@ -93,11 +93,34 @@ rubric makes the final call (precision). Add your own patterns there.
 npm test        # core parser / prefilter / redactor unit tests
 ```
 
+## Import modes
+
+The app supports two ways to bring in chats, chosen in the UI (step 1):
+
+1. **Export files (default, recommended)** — zero ban risk, fully ToS-compliant.
+2. **Live link (beta, opt-in)** — connects your own number via Baileys pairing code.
+   **OFF by default.** Requires `ENABLE_LIVE=true` on the server, installing the
+   library (`npm i baileys -w server`), and an explicit in-app consent to the
+   ban-risk notice. The client is **strictly read-only** (never sends messages,
+   never marks online), which lowers but does not eliminate ban risk — see the
+   plan's ban-avoidance playbook (§3). Live and exported chats are searched together.
+
+   > ⚠️ Live mode uses the unofficial WhatsApp Web protocol on your real number.
+   > WhatsApp may ban numbers that use such tools. Enable only if you accept that.
+
+## Saved searches & feedback (Phase 2)
+
+- **Saved searches** — save a prompt + pattern + date-range + confidence combo and
+  reload it later.
+- **False-positive feedback** — dismiss a finding; its signature is remembered and
+  suppressed in future searches, so results improve over time.
+
 ## Status
 
-- ✅ Phase 0 — foundations (auth, encrypted-friendly local store, config)
+- ✅ Phase 0 — foundations (auth, local store, config)
 - ✅ Phase 1 — export analyzer (parser, prefilter, redactor, Claude classify, report)
-- ⏭️ Phase 2 — richer pattern tuning, saved searches, false-positive feedback
-- ⏸️ Phase 3 — optional live link (intentionally **not** built: you opted out of ban risk)
+- ✅ Phase 2 — saved searches, false-positive feedback, mocked end-to-end tests
+- ✅ Phase 3 — optional live link (Baileys), **opt-in & off by default**
+  (not tested against a live WhatsApp account in CI — verify pairing on your device)
 
 See `../docs/whatsapp-ai-chat-analyzer-plan.md` for the full plan.

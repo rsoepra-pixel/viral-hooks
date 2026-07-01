@@ -54,6 +54,8 @@ export interface Candidate {
 
 /** Result of LLM classification for a candidate. */
 export interface Finding {
+  /** Stable id "chatId:seq:patternId" for feedback (false-positive) tracking. */
+  signature: string;
   chatId: string;
   chatTitle: string | null;
   sender: string | null;

@@ -41,7 +41,8 @@ function Login({ onOk }: { onOk: () => void }) {
 function Main({ onLogout }: { onLogout: () => void }) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [patterns, setPatterns] = useState<Pattern[]>([]);
-  const [health, setHealth] = useState<{ llmConfigured: boolean } | null>(null);
+  const [health, setHealth] = useState<{ llmConfigured: boolean; liveEnabled: boolean } | null>(null);
+  const [mode, setMode] = useState<"export" | "live">("export");
 
   const refresh = () => api.chats().then(setChats);
   useEffect(() => {
@@ -55,7 +56,9 @@ function Main({ onLogout }: { onLogout: () => void }) {
       <div className="topbar">
         <div className="brand"><span className="dot" /> WhatsApp AI Chat Analyzer</div>
         <div className="row">
-          <span className="muted">Export-based · read-only · zero ban risk</span>
+          <span className="muted">
+            {mode === "export" ? "Export-based · read-only · zero ban risk" : "Live link · read-only · opt-in (ban risk)"}
+          </span>
           <button onClick={async () => { await api.logout(); onLogout(); }}>Log out</button>
         </div>
       </div>
@@ -65,11 +68,110 @@ function Main({ onLogout }: { onLogout: () => void }) {
             ⚠️ No <b>ANTHROPIC_API_KEY</b> configured on the server — search will fail until you set it in <code>.env</code>.
           </div>
         )}
-        <Uploader onUploaded={refresh} />
+
+        <div className="panel">
+          <h2>1 · Choose how to import chats</h2>
+          <div className="row">
+            <span className={"pill" + (mode === "export" ? " on" : "")} onClick={() => setMode("export")}>
+              📁 Export files (safe, recommended)
+            </span>
+            <span className={"pill" + (mode === "live" ? " on" : "")} onClick={() => setMode("live")}>
+              🔗 Live link (beta · ban risk)
+            </span>
+          </div>
+        </div>
+
+        {mode === "export" ? (
+          <Uploader onUploaded={refresh} />
+        ) : (
+          <LivePanel enabledOnServer={!!health?.liveEnabled} onIngest={refresh} />
+        )}
         <ChatList chats={chats} onChange={refresh} />
         <SearchConsole chats={chats} patterns={patterns} />
       </div>
     </>
+  );
+}
+
+function LivePanel({ enabledOnServer, onIngest }: { enabledOnServer: boolean; onIngest: () => void }) {
+  const [status, setStatus] = useState<Awaited<ReturnType<typeof api.liveStatus>> | null>(null);
+  const [phone, setPhone] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const poll = () => api.liveStatus().then(setStatus).catch(() => {});
+  useEffect(() => {
+    poll();
+    const t = setInterval(() => { poll(); onIngest(); }, 5000);
+    return () => clearInterval(t);
+  }, []);
+
+  const pair = async () => {
+    setBusy(true); setErr(""); setCode("");
+    try { const r = await api.livePair(phone, consent); setCode(r.code); }
+    catch (e: any) { setErr(e.message); }
+    finally { setBusy(false); poll(); }
+  };
+
+  return (
+    <div className="panel">
+      <h2>2 · Live WhatsApp link <span className="chip">beta · read-only</span></h2>
+      <div className="error" style={{ marginBottom: 12 }}>
+        ⚠️ <b>Ban risk.</b> This uses the unofficial WhatsApp Web protocol on <b>your own number</b>.
+        WhatsApp may ban numbers that use such tools. The client is strictly read-only (never sends),
+        which lowers but does not eliminate the risk. Use at your own discretion.
+      </div>
+      {!enabledOnServer ? (
+        <div className="notice">
+          Live mode is <b>disabled on the server</b>. To enable it, set <code>ENABLE_LIVE=true</code> and
+          install the library (<code>npm i baileys -w server</code>), then restart.
+        </div>
+      ) : (
+        <>
+          <div className="muted" style={{ marginBottom: 8 }}>
+            Status: <b>{status?.state ?? "…"}</b>
+            {status?.messagesIngested ? ` · ${status.messagesIngested} messages ingested` : ""}
+          </div>
+          {status?.state === "connected" ? (
+            <div className="row">
+              <div className="notice" style={{ flex: 1 }}>✅ Connected. New messages are being ingested and are searchable below.</div>
+              <button onClick={async () => { await api.liveLogout(); poll(); }}>Unlink</button>
+            </div>
+          ) : (
+            <>
+              <div className="grid cols-2">
+                <div>
+                  <label>Your WhatsApp number (international, e.g. 6281234567890)</label>
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="62..." />
+                </div>
+                <div style={{ display: "flex", alignItems: "flex-end" }}>
+                  <label className="pill" style={{ marginBottom: 0 }}>
+                    <input type="checkbox" style={{ width: "auto" }} checked={consent}
+                      onChange={(e) => setConsent(e.target.checked)} />
+                    I understand and accept the ban risk
+                  </label>
+                </div>
+              </div>
+              <div className="row" style={{ marginTop: 12 }}>
+                <button className="primary" disabled={busy || !consent || !phone} onClick={pair}>
+                  {busy ? <span className="spinner" /> : "Get pairing code"}
+                </button>
+              </div>
+              {code && (
+                <div className="notice" style={{ marginTop: 12 }}>
+                  On your phone: WhatsApp → <b>Linked devices</b> → <b>Link a device</b> → <b>Link with phone number</b>,
+                  then enter this code:
+                  <div style={{ fontSize: 28, letterSpacing: 4, fontWeight: 700, marginTop: 8 }}>{code}</div>
+                </div>
+              )}
+            </>
+          )}
+          {err && <div className="error" style={{ marginTop: 10 }}>{err}</div>}
+        </>
+      )}
+    </div>
   );
 }
 
@@ -85,7 +187,7 @@ function Uploader({ onUploaded }: { onUploaded: () => void }) {
   };
   return (
     <div className="panel">
-      <h2>1 · Import exported chats</h2>
+      <h2>2 · Import exported chats</h2>
       <p className="muted">
         In WhatsApp open a chat → ⋮ → <b>More</b> → <b>Export chat</b> → <b>Without media</b> (recommended),
         then upload the <code>.txt</code> or <code>.zip</code> here. Data stays on this server.
@@ -102,7 +204,7 @@ function Uploader({ onUploaded }: { onUploaded: () => void }) {
 function ChatList({ chats, onChange }: { chats: Chat[]; onChange: () => void }) {
   return (
     <div className="panel">
-      <h2>2 · Imported chats ({chats.length})</h2>
+      <h2>3 · Imported chats ({chats.length})</h2>
       {chats.length === 0 && <p className="muted">No chats yet.</p>}
       {chats.map((c) => (
         <div className="chat-item" key={c.id}>
@@ -129,6 +231,22 @@ function SearchConsole({ chats, patterns }: { chats: Chat[]; patterns: Pattern[]
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [result, setResult] = useState<SearchResult | null>(null);
+  const [saved, setSaved] = useState<Array<{ id: string; name: string; query: any }>>([]);
+
+  const refreshSaved = () => api.savedSearches().then(setSaved).catch(() => {});
+  useEffect(() => { refreshSaved(); }, []);
+
+  const currentQuery = () => ({ prompt, selPatterns, selChats, from, to, minConf });
+  const applyQuery = (q: any) => {
+    setPrompt(q.prompt ?? ""); setSelPatterns(q.selPatterns ?? []); setSelChats(q.selChats ?? []);
+    setFrom(q.from ?? ""); setTo(q.to ?? ""); setMinConf(q.minConf ?? 0.5);
+  };
+  const save = async () => {
+    const name = prompt.trim() ? prompt.slice(0, 40) : window.prompt("Name this search:") || "";
+    if (!name) return;
+    await api.saveSearch(name, currentQuery());
+    refreshSaved();
+  };
 
   const toggle = (arr: string[], v: string) =>
     arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v];
@@ -151,7 +269,7 @@ function SearchConsole({ chats, patterns }: { chats: Chat[]; patterns: Pattern[]
 
   return (
     <div className="panel">
-      <h2>3 · Search &amp; analyze</h2>
+      <h2>4 · Search &amp; analyze</h2>
       <div className="grid cols-2">
         <div>
           <label>Your instruction / prompt (optional)</label>
@@ -195,7 +313,23 @@ function SearchConsole({ chats, patterns }: { chats: Chat[]; patterns: Pattern[]
         <button className="primary" onClick={run} disabled={busy || chats.length === 0}>
           {busy ? <><span className="spinner" /> Analyzing…</> : "Analyze"}
         </button>
+        <button onClick={save} disabled={chats.length === 0}>Save search</button>
       </div>
+
+      {saved.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          <label>Saved searches</label>
+          <div className="row">
+            {saved.map((s) => (
+              <span key={s.id} className="pill" onClick={() => applyQuery(s.query)} title="Load">
+                {s.name}
+                <b style={{ marginLeft: 6, color: "var(--danger)" }}
+                  onClick={async (e) => { e.stopPropagation(); await api.deleteSavedSearch(s.id); refreshSaved(); }}>×</b>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {err && <div className="error" style={{ marginTop: 12 }}>{err}</div>}
       {result && <Results result={result} prompt={prompt} patterns={selPatterns.length ? selPatterns : patterns.map(p => p.id)} from={from} to={to} chats={chats} selChats={selChats} />}
@@ -210,12 +344,20 @@ function Results({ result, prompt, patterns, from, to, chats, selChats }: {
   from: string; to: string; chats: Chat[]; selChats: string[];
 }) {
   const [mask, setMask] = useState(false);
+  const [findings, setFindings] = useState<Finding[]>(result.findings);
+  useEffect(() => { setFindings(result.findings); }, [result]);
+
+  const dismiss = async (f: Finding) => {
+    await api.addFeedback(f.signature);
+    setFindings((fs) => fs.filter((x) => x.signature !== f.signature));
+  };
+
   const openReport = async () => {
     const chatsScanned = (selChats.length ? chats.filter(c => selChats.includes(c.id)) : chats).map(c => c.title ?? c.id);
     const res = await fetch(api.reportUrl, {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        findings: result.findings, prompt,
+        findings, prompt,
         patternsSearched: patterns, chatsScanned, maskNumbers: mask,
         from: from ? new Date(from).getTime() : undefined,
         to: to ? new Date(to).getTime() : undefined,
@@ -229,23 +371,23 @@ function Results({ result, prompt, patterns, from, to, chats, selChats }: {
   return (
     <div style={{ marginTop: 18, borderTop: "1px solid var(--line)", paddingTop: 16 }}>
       <div className="row" style={{ justifyContent: "space-between" }}>
-        <div><b>{result.findings.length}</b> findings <span className="muted">· {result.candidatesScanned} candidates scanned</span></div>
+        <div><b>{findings.length}</b> findings <span className="muted">· {result.candidatesScanned} candidates scanned</span></div>
         <div className="row">
           <label className="pill" style={{ marginBottom: 0 }}>
             <input type="checkbox" style={{ width: "auto" }} checked={mask} onChange={(e) => setMask(e.target.checked)} /> Mask numbers
           </label>
-          <button className="primary" onClick={openReport} disabled={result.findings.length === 0}>Generate report (PDF)</button>
+          <button className="primary" onClick={openReport} disabled={findings.length === 0}>Generate report (PDF)</button>
         </div>
       </div>
       <div style={{ marginTop: 14 }}>
-        {result.findings.map((f, i) => <FindingCard key={i} f={f} mask={mask} />)}
-        {result.findings.length === 0 && <p className="muted">No matches above the confidence threshold.</p>}
+        {findings.map((f) => <FindingCard key={f.signature} f={f} mask={mask} onDismiss={() => dismiss(f)} />)}
+        {findings.length === 0 && <p className="muted">No matches above the confidence threshold.</p>}
       </div>
     </div>
   );
 }
 
-function FindingCard({ f, mask }: { f: Finding; mask: boolean }) {
+function FindingCard({ f, mask, onDismiss }: { f: Finding; mask: boolean; onDismiss: () => void }) {
   const number = f.senderNumber ? (mask ? maskPhone(f.senderNumber) : f.senderNumber) : "—";
   return (
     <div className="finding">
@@ -254,7 +396,10 @@ function FindingCard({ f, mask }: { f: Finding; mask: boolean }) {
           <div className="name">{f.sender ?? "Unknown"} <span className="chip">{f.patternLabel}</span></div>
           <div className="muted">{f.chatTitle ?? "Chat"} · {new Date(f.timestamp).toLocaleString("id-ID")} · WhatsApp: {number}</div>
         </div>
-        <div className={"conf " + confClass(f.confidence)}>{Math.round(f.confidence * 100)}%</div>
+        <div className="row">
+          <div className={"conf " + confClass(f.confidence)}>{Math.round(f.confidence * 100)}%</div>
+          <button title="Mark as false positive (hides it and future matches)" onClick={onDismiss}>✕ False positive</button>
+        </div>
       </div>
       <div className="muted" style={{ fontStyle: "italic", marginTop: 6 }}>{f.rationale}</div>
       <div className="excerpt">

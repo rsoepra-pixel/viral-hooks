@@ -46,7 +46,53 @@ export class Store {
         PRIMARY KEY (chat_id, seq)
       );
       CREATE INDEX IF NOT EXISTS idx_messages_chat_ts ON messages(chat_id, ts);
+      CREATE TABLE IF NOT EXISTS feedback (
+        signature TEXT PRIMARY KEY,
+        created_at INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS saved_searches (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        query TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      );
     `);
+  }
+
+  // ---- Feedback (false positives) ----
+  addFeedback(signature: string) {
+    this.db
+      .prepare(`INSERT OR IGNORE INTO feedback (signature, created_at) VALUES (?, ?)`)
+      .run(signature, Date.now());
+  }
+
+  removeFeedback(signature: string) {
+    this.db.prepare(`DELETE FROM feedback WHERE signature = ?`).run(signature);
+  }
+
+  listFeedback(): Set<string> {
+    const rows = this.db.prepare(`SELECT signature FROM feedback`).all() as {
+      signature: string;
+    }[];
+    return new Set(rows.map((r) => r.signature));
+  }
+
+  // ---- Saved searches ----
+  addSavedSearch(id: string, name: string, query: unknown) {
+    this.db
+      .prepare(`INSERT INTO saved_searches (id, name, query, created_at) VALUES (?,?,?,?)`)
+      .run(id, name, JSON.stringify(query), Date.now());
+  }
+
+  listSavedSearches(): Array<{ id: string; name: string; query: unknown; created_at: number }> {
+    const rows = this.db
+      .prepare(`SELECT * FROM saved_searches ORDER BY created_at DESC`)
+      .all() as Array<{ id: string; name: string; query: string; created_at: number }>;
+    return rows.map((r) => ({ ...r, query: JSON.parse(r.query) }));
+  }
+
+  deleteSavedSearch(id: string) {
+    this.db.prepare(`DELETE FROM saved_searches WHERE id = ?`).run(id);
   }
 
   addChat(
@@ -94,6 +140,62 @@ export class Store {
       max_ts: maxTs,
       created_at: now,
     };
+  }
+
+  /**
+   * Append messages to a chat (creating it if needed). Used by the live link to
+   * ingest new messages incrementally. Seq continues from the current count.
+   */
+  appendMessages(
+    chatId: string,
+    title: string | null,
+    isGroup: boolean,
+    newParticipants: string[],
+    msgs: Array<{ timestamp: number; sender: string | null; text: string; system: boolean }>
+  ): void {
+    if (msgs.length === 0) return;
+    const now = Date.now();
+    const existing = this.getChat(chatId);
+    const insertMsg = this.db.prepare(
+      `INSERT OR REPLACE INTO messages (chat_id,seq,ts,sender,text,system) VALUES (?,?,?,?,?,?)`
+    );
+    const tx = this.db.transaction(() => {
+      let startSeq: number;
+      let participants: string[];
+      if (!existing) {
+        this.db
+          .prepare(
+            `INSERT INTO chats (id,title,is_group,participants,message_count,min_ts,max_ts,created_at)
+             VALUES (?,?,?,?,?,?,?,?)`
+          )
+          .run(chatId, title, isGroup ? 1 : 0, "[]", 0, msgs[0].timestamp, msgs[0].timestamp, now);
+        startSeq = 0;
+        participants = [];
+      } else {
+        startSeq = existing.message_count;
+        participants = JSON.parse(existing.participants);
+      }
+      msgs.forEach((m, i) => {
+        insertMsg.run(chatId, startSeq + i, m.timestamp, m.sender, m.text, m.system ? 1 : 0);
+      });
+      const parts = new Set([...participants, ...newParticipants]);
+      const tsList = msgs.map((m) => m.timestamp);
+      const cur = this.getChat(chatId)!;
+      this.db
+        .prepare(
+          `UPDATE chats SET message_count=?, min_ts=?, max_ts=?, participants=?, title=COALESCE(?,title)
+           WHERE id=?`
+        )
+        .run(
+          startSeq + msgs.length,
+          Math.min(cur.min_ts, ...tsList),
+          Math.max(cur.max_ts, ...tsList),
+          JSON.stringify([...parts]),
+          title,
+          chatId
+        );
+    });
+    tx();
   }
 
   listChats(): ChatRow[] {

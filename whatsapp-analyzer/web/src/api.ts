@@ -15,6 +15,7 @@ export interface Pattern {
 }
 
 export interface Finding {
+  signature: string;
   chatId: string;
   chatTitle: string | null;
   sender: string | null;
@@ -44,7 +45,10 @@ async function j<T>(res: Response): Promise<T> {
 }
 
 export const api = {
-  health: () => fetch("/api/health").then((r) => j<{ ok: boolean; llmConfigured: boolean }>(r)),
+  health: () =>
+    fetch("/api/health").then((r) =>
+      j<{ ok: boolean; llmConfigured: boolean; liveEnabled: boolean }>(r)
+    ),
   login: (password: string) =>
     fetch("/api/login", {
       method: "POST",
@@ -75,4 +79,47 @@ export const api = {
       body: JSON.stringify(q),
     }).then((r) => j<SearchResult>(r)),
   reportUrl: "/api/report",
+
+  // Phase 2: false-positive feedback
+  addFeedback: (signature: string) =>
+    fetch("/api/feedback", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ signature }),
+    }).then((r) => j(r)),
+
+  // Phase 2: saved searches
+  savedSearches: () =>
+    fetch("/api/saved-searches").then((r) =>
+      j<Array<{ id: string; name: string; query: any; created_at: number }>>(r)
+    ),
+  saveSearch: (name: string, query: any) =>
+    fetch("/api/saved-searches", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name, query }),
+    }).then((r) => j(r)),
+  deleteSavedSearch: (id: string) =>
+    fetch(`/api/saved-searches/${id}`, { method: "DELETE" }).then((r) => j(r)),
+
+  // Optional live link
+  liveStatus: () =>
+    fetch("/api/live/status").then((r) =>
+      j<{
+        available: boolean;
+        enabled: boolean;
+        state: string;
+        pairingCode: string | null;
+        phone: string | null;
+        lastError: string | null;
+        messagesIngested: number;
+      }>(r)
+    ),
+  livePair: (phone: string, consent: boolean) =>
+    fetch("/api/live/pair", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ phone, consent }),
+    }).then((r) => j<{ code: string }>(r)),
+  liveLogout: () => fetch("/api/live/logout", { method: "POST" }).then((r) => j(r)),
 };

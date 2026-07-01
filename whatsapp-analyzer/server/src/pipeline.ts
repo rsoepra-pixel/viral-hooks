@@ -8,9 +8,23 @@ import {
   type Finding,
   type SearchQuery,
 } from "@wa-analyzer/core";
-import { classify, batch } from "./llm.js";
+import { classify, batch, type Verdict } from "./llm.js";
+import type { RedactionMap, PatternDef } from "@wa-analyzer/core";
 import type { Store } from "./db.js";
 import type { Config } from "./config.js";
+
+/** Injectable classifier so the pipeline can be tested without a live API. */
+export type ClassifyFn = (
+  candidates: Candidate[],
+  patterns: PatternDef[],
+  redact: boolean,
+  map: RedactionMap,
+  userPrompt?: string
+) => Promise<Verdict[]>;
+
+export interface PipelineDeps {
+  classify?: ClassifyFn;
+}
 
 const PHONE_ONLY = /^\+?\d[\d\s().-]{6,}\d$/;
 
@@ -28,11 +42,17 @@ export interface PipelineResult {
 export async function runSearch(
   store: Store,
   cfg: Config,
-  q: SearchQuery
+  q: SearchQuery,
+  deps: PipelineDeps = {}
 ): Promise<PipelineResult> {
-  if (!cfg.anthropicKey) {
-    throw new Error("ANTHROPIC_API_KEY is not configured on the server.");
-  }
+  const classifyFn: ClassifyFn =
+    deps.classify ??
+    ((cands, patterns, redact, map, prompt) => {
+      if (!cfg.anthropicKey) {
+        throw new Error("ANTHROPIC_API_KEY is not configured on the server.");
+      }
+      return classify(cfg.anthropicKey, cfg.model, cands, patterns, redact, map, prompt);
+    });
 
   const chats = store.listChats().filter(
     (c) => q.chatIds.length === 0 || q.chatIds.includes(c.id)
@@ -68,23 +88,19 @@ export async function runSearch(
   const selectedPatterns =
     q.patternIds.length > 0 ? PATTERNS.filter((p) => q.patternIds.includes(p.id)) : PATTERNS;
 
+  const dismissed = store.listFeedback();
   const findings: Finding[] = [];
   for (const chunk of batch(allCandidates, 15)) {
-    const verdicts = await classify(
-      cfg.anthropicKey,
-      cfg.model,
-      chunk,
-      selectedPatterns,
-      cfg.redact,
-      map,
-      q.prompt
-    );
+    const verdicts = await classifyFn(chunk, selectedPatterns, cfg.redact, map, q.prompt);
     for (const v of verdicts) {
       const c = chunk[v.index];
       if (!c) continue;
       if (v.confidence < q.minConfidence) continue;
+      const sig = `${c.chatId}:${c.message.seq}:${v.patternId}`;
+      if (dismissed.has(sig)) continue; // user marked this a false positive
       const pattern = PATTERN_MAP.get(v.patternId);
       findings.push({
+        signature: sig,
         chatId: c.chatId,
         chatTitle: chatMeta.get(c.chatId)?.title ?? null,
         sender: c.message.sender,
